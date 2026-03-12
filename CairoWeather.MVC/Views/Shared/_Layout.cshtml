@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CairoWeather.MVC</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CairoWeather.MVC.styles.css" asp-append-version="true" />
+    <!-- Tab Favicon (Solar Panel matching the header icon) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%233b82f6' d='M316.4 33.3c-2.4-7.5-9.3-12.7-17.2-13.1s-15.5 3.8-19.1 11L255.8 80 208.6 80 184.3 31.3c-3.6-7.2-11.2-11.4-19.1-11s-14.8 5.6-17.2 13.1L114.7 139.7 54.4 124.6C44.7 122.2 34.6 128.5 32.2 138.2s3.9 19.8 13.6 22.2l56.8 14.2-21.7 65.1L24 225.4c-9.7-2.4-19.8 3.9-22.2 13.6s3.9 19.8 13.6 22.2l53.4 13.4L37.1 369.3c-3 9.1 1.9 18.9 11 21.9s18.9-1.9 21.9-11L101.7 285.1l52.5 13.1-31.7 95.1c-3 9.1 1.9 18.9 11 21.9s18.9-1.9 21.9-11l28.6-85.9 47.2 0 28.6 85.9c3 9.1 12.8 14 21.9 11s14-12.8 11-21.9l-31.7-95.1 52.5-13.1 31.7 95.1c3 9.1 12.8 14 21.9 11s14-12.8 11-21.9L350.6 274.6l53.4-13.4c9.7-2.4 15.6-12.5 13.2-22.2s-12.5-15.6-22.2-13.2l-56.8 14.2L316.4 175l56.8-14.2c9.7-2.4 15.6-12.5 13.2-22.2s-12.5-15.6-22.2-13.2l-54.4 13.6L276.5 33.3z'/%3E%3C/svg%3E">
+
+</head>
+<body>
+    
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+   
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

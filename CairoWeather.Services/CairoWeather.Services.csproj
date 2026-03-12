@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CairoWeather.Core\CairoWeather.Core.csproj" />
+    <ProjectReference Include="..\CairoWeather.Data\CairoWeather.Data.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CairoWeather.Core/CairoWeather.Core.csproj" />
+  <Project Path="CairoWeather.Data/CairoWeather.Data.csproj" />
+  <Project Path="CairoWeather.MVC/CairoWeather.MVC.csproj" />
+  <Project Path="CairoWeather.Services/CairoWeather.Services.csproj" />
+</Solution>
