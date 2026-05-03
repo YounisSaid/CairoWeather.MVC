@@ -30,16 +30,15 @@ public partial class Program
             var services = scope.ServiceProvider;
             try
             {
-                var seeder = services.GetRequiredService<DataSeeder>();
+                // Use WebRootPath so it looks inside wwwroot!
                 var env = services.GetRequiredService<IWebHostEnvironment>();
+                string hourlyPath = Path.Combine(env.WebRootPath, "open-meteo-30.05N31.19E22m (2).csv");
+                string dailyPath = Path.Combine(env.WebRootPath, "open-meteo-30.05N31.19E22m (4).csv");
 
-                // Define paths to your CSV files (assuming they are in App_Data or similar)
-                // You should place your CSV files in a folder named 'Data' in your Web project
-                string hourlyPath = Path.Combine(env.ContentRootPath, "Data", "open-meteo-30.05N31.19E22m (2).csv");
-                string dailyPath = Path.Combine(env.ContentRootPath, "Data", "open-meteo-30.05N31.19E22m (4).csv");
+                // Force the seeder to run
+                var seeder = services.GetRequiredService<DataSeeder>();
+                seeder.SeedAllDataAsync(hourlyPath, dailyPath).Wait();
 
-                // Run the bulk seeder
-                await seeder.SeedAllDataAsync(hourlyPath, dailyPath);
             }
             catch (Exception ex)
             {
