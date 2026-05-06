@@ -1,0 +1,428 @@
+﻿@{
+    ViewData["Title"] = "Inverter Clipping Simulator";
+}
+
+<style>
+    .simulator-card {
+        background: #0f172a;
+        border-radius: 20px;
+        border: 1px solid #1e3a8a;
+        box-shadow: 0 0 40px rgba(30, 58, 138, 0.2);
+        overflow: hidden;
+    }
+
+    .visualizer-screen {
+        height: 350px;
+        background: radial-gradient(circle at center, #1e293b, #0f172a);
+        position: relative;
+        overflow: hidden;
+        border-bottom: 2px solid #334155;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 20px;
+    }
+
+    /* --- ANIMATION ELEMENTS --- */
+    .system-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+    }
+
+    .pv-array {
+        width: 100px;
+        height: 100px;
+        background: repeating-linear-gradient(45deg, #1e40af, #1e40af 10px, #1d4ed8 11px);
+        border: 3px solid #cbd5e1;
+        border-radius: 8px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+
+    .inverter-box {
+        width: 90px;
+        height: 120px;
+        background: #334155;
+        border: 4px solid #8b5cf6;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        position: relative;
+    }
+
+    .grid-house {
+        width: 100px;
+        height: 100px;
+        background: #475569;
+        clip-path: polygon(50% 0%, 100% 40%, 100% 100%, 0 100%, 0 40%);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 10px;
+    }
+
+    /* Energy Flow Lines */
+    .wire {
+        position: absolute;
+        height: 6px;
+        background: #334155;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    .wire-dc {
+        left: 120px;
+        right: 50%;
+        width: calc(50% - 165px);
+    }
+
+    .wire-ac {
+        left: 50%;
+        right: 120px;
+        margin-left: 45px;
+        width: calc(50% - 165px);
+    }
+
+    /* Particles now animated purely via JS WAAPI */
+    .energy-particle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 20px;
+        background: #10b981;
+        box-shadow: 0 0 10px #10b981;
+        opacity: 0;
+    }
+
+    .wire-ac .energy-particle {
+        background: #8b5cf6;
+        box-shadow: 0 0 10px #8b5cf6;
+    }
+
+    /* --- METRICS DASHBOARD --- */
+    .metric-box {
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        font-family: monospace;
+    }
+
+    .glow-green {
+        border-left: 4px solid #10b981;
+        box-shadow: -10px 0 25px -10px rgba(16, 185, 129, 0.8);
+    }
+
+    .glow-purple {
+        border-left: 4px solid #8b5cf6;
+        box-shadow: -10px 0 25px -10px rgba(139, 92, 246, 0.8);
+    }
+
+    .glow-red {
+        border-left: 4px solid #ef4444;
+        box-shadow: -10px 0 25px -10px rgba(239, 68, 68, 0.8);
+    }
+
+    .glow-engine {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px dashed #8b5cf6 !important;
+        box-shadow: inset 0 0 30px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.2) !important;
+    }
+
+    /* ستايل المعادلات النظيف */
+    .clean-formula {
+        background: #0f172a;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.95rem;
+        color: #e2e8f0;
+        border: 1px solid #334155;
+        margin: 5px 0 10px 0;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .slider-container {
+        padding: 20px;
+        background: #1e293b;
+    }
+
+    .form-range::-webkit-slider-thumb {
+        background: #8b5cf6;
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="simulator-card shadow-lg">
+            <div class="visualizer-screen">
+                <div class="wire wire-dc"><div class="energy-particle" id="particleDC"></div></div>
+                <div class="wire wire-ac"><div class="energy-particle" id="particleAC"></div></div>
+
+                <div class="system-node">
+                    <div class="pv-array"></div>
+                    <span class="mt-2 fw-bold text-success border border-success px-2 rounded bg-dark">DC Source</span>
+                </div>
+
+                <div class="system-node">
+                    <div class="inverter-box" id="inverterUI">INV</div>
+                    <span class="mt-2 fw-bold text-purple border px-2 rounded bg-dark" style="color:#8b5cf6; border-color:#8b5cf6 !important;">Inverter</span>
+                    <span class="badge bg-danger mt-1 d-none" id="lblClipping">CLIPPING!</span>
+                </div>
+
+                <div class="system-node">
+                    <div class="grid-house">
+                        <i class="fa-solid fa-bolt text-warning fs-3"></i>
+                    </div>
+                    <span class="mt-2 fw-bold text-info border border-info px-2 rounded bg-dark">AC Grid</span>
+                </div>
+            </div>
+
+            <div class="slider-container">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-white fw-bold">Time of Day: <span id="timeDisplay" class="text-warning">06:00 AM</span></span>
+                    <span class="text-white fw-bold">Inverter Cap: <span id="invCapDisplay" class="text-purple" style="color:#8b5cf6;">4000 W</span></span>
+                </div>
+
+                <label class="text-muted small">Sun Position (Irradiance Curve)</label>
+                <input type="range" class="form-range mb-3" min="6" max="18" step="0.5" value="6" id="timeSlider" oninput="runInverterEngine()">
+
+                <label class="text-muted small">Inverter Max AC Capacity (Try lowering this at noon!)</label>
+                <input type="range" class="form-range" min="2000" max="6000" step="200" value="4000" id="capacitySlider" oninput="runInverterEngine()">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="row g-3 h-100">
+            <div class="col-12">
+                <div class="metric-box glow-green">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-title">Gross DC Power (Panel)</div>
+                            <div class="text-muted small">Raw generation from sunlight</div>
+                        </div>
+                        <div class="metric-value text-success"><span id="valDCPower">0</span> <span style="font-size:1rem;">W</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="metric-box glow-purple">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-title" style="color: #a78bfa;">Actual AC Power (Grid)</div>
+                            <div class="text-muted small">Converted usable energy</div>
+                        </div>
+                        <div class="metric-value" style="color: #a78bfa;"><span id="valACPower">0</span> <span style="font-size:1rem;">W</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="metric-box glow-red" id="clipBox">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-title text-danger">Clipped Power (Loss)</div>
+                            <div class="text-muted small">Energy wasted due to bottleneck</div>
+                        </div>
+                        <div class="metric-value text-danger"><span id="valClipped">0</span> <span style="font-size:1rem;">W</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm glow-engine">
+            <div class="card-body p-4 text-white">
+                <h4 class="fw-bold mb-4"><i class="fa-solid fa-scissors text-primary me-2" style="color: #8b5cf6 !important;"></i>Understanding Inverter Clipping & DC/AC Ratio</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Why do we clip power? (DC/AC Ratio)</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+                            <p class="text-light small mb-2" style="line-height: 1.8;">
+                                In solar engineering, PV arrays (DC) are intentionally oversized relative to the Inverter (AC). This is known as the <strong>DC/AC Ratio</strong> (typically 1.2 to 1.3).
+                            </p>
+                            <ul class="fw-bold text-uppercase small mb-3" style="line-height: 2;">
+                                <li><i class="text-light small mb-2"></i><strong>Benefit:</strong> Maximizes energy production during morning, evening, and cloudy days.</li>
+                                <li><i class="text-light small mb-2"></i><strong>Drawback:</strong> At solar noon on a clear day, the DC power exceeds the Inverter's maximum AC rating. The inverter "clips" (discards) this excess energy to protect its internal circuitry.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Real-time Simulation Logic</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+
+                            <h6 class="text-white small fw-bold mb-1">1. Simulated DC Array Output (Peaks at 5000W)</h6>
+                            <div class="clean-formula text-success">
+                                DC_Power = 5000W &times; sin(TimeProgress &times; &pi;)
+                            </div>
+
+                            <h6 class="text-white small fw-bold mb-1 mt-3">2. Inverter Conversion (96% Efficiency)</h6>
+                            <div class="clean-formula text-light">
+                                Raw_AC_Power = DC_Power &times; 0.96
+                            </div>
+
+                            <h6 class="text-white small fw-bold mb-1 mt-3">3. The Clipping Condition (Bottleneck Logic)</h6>
+                            <div class="clean-formula text-danger mb-0" style="line-height: 1.8;">
+                                IF (Raw_AC_Power > Inverter_Max_Capacity) {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;Final_AC = Inverter_Max_Capacity<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;Clipped_Loss = Raw_AC_Power - Inverter_Max_Capacity<br>
+                                } ELSE {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;Final_AC = Raw_AC_Power<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;Clipped_Loss = 0<br>
+                                }
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Global variables for Web Animations API (WAAPI)
+        let dcAnimation, acAnimation, shakeAnimation;
+
+        function initAnimations() {
+            const particleDC = document.getElementById('particleDC');
+            const particleAC = document.getElementById('particleAC');
+            const invBox = document.getElementById('inverterUI');
+
+            // Flow animation definition
+            const flowKeyframes = [
+                { left: '-20px', opacity: 0 },
+                { opacity: 1, offset: 0.1 },
+                { opacity: 1, offset: 0.9 },
+                { left: '100%', opacity: 0 }
+            ];
+            const flowOptions = { duration: 2000, iterations: Infinity };
+
+            // Shake animation definition
+            const shakeKeyframes = [
+                { transform: 'translate(1px, 1px) rotate(0deg)' },
+                { transform: 'translate(-1px, -2px) rotate(-1deg)' },
+                { transform: 'translate(-3px, 0px) rotate(1deg)' },
+                { transform: 'translate(3px, 2px) rotate(0deg)' },
+                { transform: 'translate(1px, -1px) rotate(0deg)' }
+            ];
+
+            // Instantiate animations natively in JS
+            dcAnimation = particleDC.animate(flowKeyframes, flowOptions);
+            acAnimation = particleAC.animate(flowKeyframes, flowOptions);
+            shakeAnimation = invBox.animate(shakeKeyframes, { duration: 500, iterations: Infinity });
+
+            // Pause shake initially until clipping happens
+            shakeAnimation.pause();
+        }
+
+        function runInverterEngine() {
+            // 1. Read Inputs
+            const hour = parseFloat(document.getElementById('timeSlider').value);
+            const maxCapacity = parseFloat(document.getElementById('capacitySlider').value);
+
+            // Time Formatting
+            let hrs = Math.floor(hour);
+            let mins = (hour % 1) === 0 ? "00" : "30";
+            let ampm = hrs >= 12 ? "PM" : "AM";
+            let displayHr = hrs > 12 ? hrs - 12 : hrs;
+            if(displayHr === 0) displayHr = 12;
+
+            document.getElementById('timeDisplay').innerText = `${displayHr < 10 ? '0':''}${displayHr}:${mins} ${ampm}`;
+            document.getElementById('invCapDisplay').innerText = `${maxCapacity} W`;
+
+            // 2. Physics: Irradiance Curve (Bell curve peaking at noon)
+            // Assume a 5000W (5kW) solar array maximum potential
+            const progress = (hour - 6) / 12; // 0 to 1
+            let irradianceFactor = Math.max(0, Math.sin(progress * Math.PI));
+
+            let dcPower = 5000 * irradianceFactor;
+
+            // 3. Inverter Logic
+            const inverterEfficiency = 0.96; // 96% efficient
+            let rawAC = dcPower * inverterEfficiency;
+
+            let finalAC = rawAC;
+            let clippedPower = 0;
+
+            // THE CLIPPING CONDITION (The Bottleneck)
+            if (rawAC > maxCapacity) {
+                finalAC = maxCapacity;
+                clippedPower = rawAC - maxCapacity;
+            }
+
+            // 4. Update UI Metrics
+            document.getElementById('valDCPower').innerText = dcPower.toFixed(0);
+            document.getElementById('valACPower').innerText = finalAC.toFixed(0);
+            document.getElementById('valClipped').innerText = clippedPower.toFixed(0);
+
+            // 5. Dynamic Animation Control via WAAPI
+            // Adjust DC flow speed based on irradiance
+            if (dcPower < 10) {
+                dcAnimation.playbackRate = 0;
+            } else {
+                dcAnimation.playbackRate = 0.5 + (irradianceFactor * 1.5);
+            }
+
+            // Adjust AC flow speed based on final output
+            if (finalAC < 10) {
+                acAnimation.playbackRate = 0;
+            } else {
+                acAnimation.playbackRate = 0.5 + ((finalAC / 6000) * 2.0);
+            }
+
+            // Control Clipping Visuals
+            const invBox = document.getElementById('inverterUI');
+            const lblClip = document.getElementById('lblClipping');
+
+            if (clippedPower > 50) {
+                shakeAnimation.play(); // Turn ON JS Shake
+                lblClip.classList.remove('d-none');
+                invBox.style.borderColor = "#ef4444";
+                invBox.style.boxShadow = "0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 20px rgba(239, 68, 68, 0.5)";
+            } else {
+                shakeAnimation.pause(); // Turn OFF JS Shake
+                lblClip.classList.add('d-none');
+                invBox.style.borderColor = "#8b5cf6";
+                invBox.style.boxShadow = "0 0 20px rgba(139, 92, 246, 0.4)";
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initAnimations();
+            runInverterEngine();
+        };
+    </script>
+}

@@ -1,0 +1,333 @@
+﻿@{
+    ViewData["Title"] = "Physics & Math Engine Library";
+    Layout = "_Layout";
+}
+
+<style>
+    .formula-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid #334155;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .math-card {
+        background: #1e293b;
+        border-radius: 16px;
+        border: 1px solid #334155;
+        height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+
+        .math-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border-color: #475569;
+        }
+
+    .card-category {
+        padding: 15px 20px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #334155;
+    }
+
+    /* ألوان الكاتيجوريز */
+    .bg-weather {
+        background: rgba(56, 189, 248, 0.1);
+        color: #38bdf8;
+        border-bottom-color: rgba(56, 189, 248, 0.2);
+    }
+
+    .bg-rad {
+        background: rgba(250, 204, 21, 0.1);
+        color: #facc15;
+        border-bottom-color: rgba(250, 204, 21, 0.2);
+    }
+
+    .bg-thermo {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-bottom-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .bg-power {
+        background: rgba(139, 92, 246, 0.1);
+        color: #a78bfa;
+        border-bottom-color: rgba(139, 92, 246, 0.2);
+    }
+
+    .bg-mechanics {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border-bottom-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .bg-finance {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border-bottom-color: rgba(16, 185, 129, 0.2);
+    }
+
+    /* الـ Card الجديد للـ TMY */
+    .bg-tmy {
+        background: rgba(16, 185, 129, 0.15); /* أخضر زمردي */
+        color: #34d399;
+        border-bottom-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .formula-block {
+        background: #0f172a;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.05rem;
+        color: #f8fafc;
+        border: 1px solid #000;
+        margin: 10px 0 20px 0;
+        text-align: center;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .symbol {
+        color: #fbbf24;
+        font-weight: bold;
+    }
+
+    .operator {
+        color: #94a3b8;
+        margin: 0 5px;
+    }
+
+    .variable {
+        color: #38bdf8;
+    }
+
+    .unit {
+        color: #10b981;
+        font-size: 0.85rem;
+        margin-left: 5px;
+    }
+
+    .variable-list li {
+        font-size: 0.9rem;
+        color: #e2e8f0;
+        margin-bottom: 5px;
+    }
+
+    .variable-list strong {
+        color: #ffffff;
+        font-weight: 800;
+    }
+
+    .section-title {
+        color: #f8fafc;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-top: 1.5rem;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="formula-header text-center text-white">
+        <h2 class="fw-bolder mb-2"><i class="fa-solid fa-book-journal-whills me-3 text-info"></i>Core Physics & Math Engine</h2>
+        <p class="text-light opacity-75 m-0" style="font-size: 1.1rem;">A comprehensive documentation of all thermodynamic, meteorological, and electrical equations actively running in the backend C# engine and JS simulators.</p>
+    </div>
+
+    <div class="row g-4 mb-5">
+
+        <div class="col-lg-6">
+            <div class="math-card">
+                <div class="card-category bg-weather"><i class="fa-solid fa-wind me-2"></i>1. Meteorology & Atmosphere</div>
+                <div class="p-4">
+
+                    <h6 class="section-title">1.1 Vapor Pressure (e)</h6>
+                    <p class="small text-light opacity-75 mb-1">Calculates vapor pressure using Dew Point (Magnus-Tetens formula).</p>
+                    <div class="formula-block">
+                        <span class="variable">e</span> <span class="operator">=</span> <span class="symbol">6.11</span> <span class="operator">&times;</span> <span class="symbol">10</span><sup>(7.5 &times; T<sub>dew</sub>) / (237.3 + T<sub>dew</sub>)</sup>
+                    </div>
+
+                    <h6 class="section-title">1.2 Humidex (Perceived Heat)</h6>
+                    <div class="formula-block">
+                        <span class="variable">Humidex</span> <span class="operator">=</span> <span class="variable">T<sub>air</sub></span> <span class="operator">+</span> ( <span class="symbol">5</span> <span class="operator">/</span> <span class="symbol">9</span> ) <span class="operator">&times;</span> ( <span class="variable">e</span> <span class="operator">-</span> <span class="symbol">10</span> )
+                    </div>
+
+                    <h6 class="section-title">1.3 Air Density (&rho;)</h6>
+                    <p class="small text-light opacity-75 mb-1">Combines dry air pressure and vapor pressure.</p>
+                    <div class="formula-block">
+                        <span class="variable">&rho;</span> <span class="operator">=</span> ( <span class="variable">P<sub>dry</sub></span> <span class="operator">/</span> <span class="symbol">R<sub>d</sub></span><span class="variable">T<sub>k</sub></span> ) <span class="operator">+</span> ( <span class="variable">P<sub>vapor</sub></span> <span class="operator">/</span> <span class="symbol">R<sub>v</sub></span><span class="variable">T<sub>k</sub></span> ) <span class="unit">kg/m³</span>
+                    </div>
+
+                    <h6 class="section-title">1.4 Wind Power Density (WPD)</h6>
+                    <div class="formula-block mb-0">
+                        <span class="variable">WPD</span> <span class="operator">=</span> <span class="symbol">0.5</span> <span class="operator">&times;</span> <span class="variable">&rho;</span> <span class="operator">&times;</span> ( <span class="variable">V<sub>km/h</sub></span> <span class="operator">/</span> <span class="symbol">3.6</span> )<sup>3</sup> <span class="unit">W/m²</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="math-card" style="border-color: #10b981;">
+                <div class="card-category bg-tmy"><i class="fa-solid fa-calendar-check me-2"></i>2. TMY Generation Algorithm (Baseline 2025)</div>
+                <div class="p-4">
+
+                    <h6 class="section-title text-success">2.1 Long-Term Average (LTA) Focus</h6>
+                    <p class="small text-light opacity-75 mb-1">The algorithm first calculates the 10-year mean for Air Temperature and Global Horizontal Irradiance (GHI) for each calendar month.</p>
+
+                    <h6 class="section-title text-success">2.2 Empirical Distance Formula (Sandia Method)</h6>
+                    <p class="small text-light opacity-75 mb-1">It then measures the "distance" of every individual historical month from the LTA. The month with the lowest distance is selected. <em>*GHI is divided by 100 to normalize its weight against temperature degrees.</em></p>
+                    <div class="formula-block" style="font-size: 0.95rem;">
+                        <span class="variable">Distance</span> <span class="operator">=</span> <span class="symbol">|</span> <span class="variable">T<sub>avg</sub></span> <span class="operator">-</span> <span class="variable">T<sub>LTA</sub></span> <span class="symbol">|</span> <span class="operator">+</span> <span class="symbol">(</span> <span class="symbol">|</span> <span class="variable">GHI<sub>avg</sub></span> <span class="operator">-</span> <span class="variable">GHI<sub>LTA</sub></span> <span class="symbol">|</span> <span class="operator">/</span> <span class="symbol">100.0</span> <span class="symbol">)</span>
+                    </div>
+
+                    <h6 class="section-title text-success">2.3 Data Stitching (Year 0)</h6>
+                    <p class="small text-light opacity-75 mb-0">The 12 winning months (from various years) are forcefully overridden to the year <strong>2025</strong>, and leap days (Feb 29) are eradicated to create a perfect 8,760-hour typical year.</p>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="math-card">
+                <div class="card-category bg-rad"><i class="fa-solid fa-sun me-2"></i>3. Solar Radiation Modeling</div>
+                <div class="p-4">
+
+                    <h6 class="section-title">3.1 Clear Sky Radiation Curve (GHI)</h6>
+                    <p class="small text-light opacity-75 mb-1">Simulates the solar arc peaking at Solar Noon (12:00 PM).</p>
+                    <div class="formula-block">
+                        <span class="variable">GHI<sub>clear</sub></span> <span class="operator">=</span> <span class="symbol">MAX</span>[ <span class="symbol">0</span> , <span class="symbol">cos</span>( (<span class="variable">Hour</span> <span class="operator">-</span> <span class="symbol">12</span>) <span class="operator">&times;</span> <span class="symbol">&pi;</span> <span class="operator">/</span> <span class="symbol">12</span> ) ] <span class="operator">&times;</span> <span class="symbol">950</span> <span class="unit">W/m²</span>
+                    </div>
+
+                    <h6 class="section-title">3.2 Cloud Attenuation (Shortwave)</h6>
+                    <p class="small text-light opacity-75 mb-1">Non-linear cubic function for light scattering through clouds.</p>
+                    <div class="formula-block">
+                        <span class="variable">CloudEffect</span> <span class="operator">=</span> <span class="symbol">1</span> <span class="operator">-</span> [ <span class="symbol">0.75</span> <span class="operator">&times;</span> ( <span class="variable">Cloud%</span> <span class="operator">/</span> <span class="symbol">100</span> )<sup>3</sup> ]<br><br>
+                        <span class="variable">GHI<sub>actual</sub></span> <span class="operator">=</span> <span class="variable">GHI<sub>clear</sub></span> <span class="operator">&times;</span> <span class="variable">CloudEffect</span>
+                    </div>
+
+                    <h6 class="section-title">3.3 Cloud Radiative Forcing</h6>
+                    <div class="formula-block mb-0">
+                        <span class="variable">CRF</span> <span class="operator">=</span> <span class="variable">GHI<sub>clear</sub></span> <span class="operator">-</span> <span class="variable">GHI<sub>actual</sub></span> <span class="unit">W/m²</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="math-card">
+                <div class="card-category bg-thermo"><i class="fa-solid fa-temperature-full me-2"></i>4. PV Thermodynamics & Heating</div>
+                <div class="p-4">
+
+                    <h6 class="section-title">4.1 Cell Temperature (NOCT Model)</h6>
+                    <p class="small text-light opacity-75 mb-1">Estimates the physical temperature of silicon cells.</p>
+                    <div class="formula-block">
+                        <span class="variable">T<sub>cell</sub></span> <span class="operator">=</span> <span class="variable">T<sub>ambient</sub></span> <span class="operator">+</span> [ ( <span class="symbol">NOCT</span> <span class="operator">-</span> <span class="symbol">20</span> ) <span class="operator">/</span> <span class="symbol">800</span> ] <span class="operator">&times;</span> <span class="variable">G</span>
+                    </div>
+
+                    <h6 class="section-title">4.2 Thermal Derating (Efficiency Loss)</h6>
+                    <p class="small text-light opacity-75 mb-1">Calculates power loss due to heat exceeding STC (25°C).</p>
+                    <div class="formula-block">
+                        <span class="variable">Loss (%)</span> <span class="operator">=</span> ( <span class="variable">T<sub>cell</sub></span> <span class="operator">-</span> <span class="symbol">25°C</span> ) <span class="operator">&times;</span> <span class="symbol">0.4%</span>
+                    </div>
+
+                    <h6 class="section-title">4.3 Photo-Thermal Units (PTU)</h6>
+                    <p class="small text-light opacity-75 mb-1">Agricultural/Energy synergy metric.</p>
+                    <div class="formula-block mb-0">
+                        <span class="variable">Hourly GDD</span> <span class="operator">=</span> <span class="symbol">MAX</span>( (<span class="variable">T<sub>air</sub></span> <span class="operator">-</span> <span class="symbol">10</span>) <span class="operator">/</span> <span class="symbol">24</span> , <span class="symbol">0</span> )<br><br>
+                        <span class="variable">PTU</span> <span class="operator">=</span> <span class="variable">Hourly GDD</span> <span class="operator">&times;</span> <span class="variable">GHI<sub>actual</sub></span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="math-card">
+                <div class="card-category bg-power"><i class="fa-solid fa-microchip me-2"></i>5. Power Generation & Inverters</div>
+                <div class="p-4">
+
+                    <h6 class="section-title">5.1 Standard Test Condition (STC) Output</h6>
+                    <div class="formula-block">
+                        <span class="variable">P<sub>max</sub></span> <span class="operator">=</span> <span class="variable">Area</span> <span class="operator">&times;</span> <span class="variable">&eta;<sub>panel</sub></span> <span class="operator">&times;</span> <span class="variable">Irradiance</span> <span class="unit">W</span>
+                    </div>
+
+                    <h6 class="section-title">5.2 Inverter Clipping Algorithm</h6>
+                    <p class="small text-light opacity-75 mb-1">Limits AC output based on inverter capacity bottleneck.</p>
+                    <div class="formula-block" style="font-size: 0.95rem;">
+                        <span class="variable">Raw<sub>AC</sub></span> <span class="operator">=</span> <span class="variable">P<sub>DC</sub></span> <span class="operator">&times;</span> <span class="symbol">0.96</span> (Inverter Efficiency)<br><br>
+                        <span class="variable">Final<sub>AC</sub></span> <span class="operator">=</span> <span class="symbol">MIN</span>( <span class="variable">Raw<sub>AC</sub></span> , <span class="variable">Inverter_Capacity</span> )<br><br>
+                        <span class="variable">Clipped Waste</span> <span class="operator">=</span> <span class="symbol">MAX</span>( <span class="symbol">0</span> , <span class="variable">Raw<sub>AC</sub></span> <span class="operator">-</span> <span class="variable">Inverter_Capacity</span> )
+                    </div>
+
+                    <h6 class="section-title">5.3 Bypass Diode Operation (Partial Shading)</h6>
+                    <div class="formula-block mb-0">
+                        <span class="variable">P<sub>module</sub></span> <span class="operator">=</span> ( <span class="variable">Active_Strings</span> <span class="operator">&times;</span> <span class="variable">P<sub>str</sub></span> ) <span class="operator">-</span> ( <span class="variable">Active_Diodes</span> <span class="operator">&times;</span> <span class="symbol">1W</span> )
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="math-card">
+                <div class="card-category bg-mechanics"><i class="fa-solid fa-gears me-2"></i>6. Advanced Mechanics & Soiling</div>
+                <div class="p-4">
+
+                    <h6 class="section-title">6.1 Single-Axis Tracking (Cosine Law)</h6>
+                    <p class="small text-light opacity-75 mb-1">Calculates irradiance based on the angle of incidence.</p>
+                    <div class="formula-block" style="font-size: 0.95rem;">
+                        <span class="variable">G<sub>fixed</sub></span> <span class="operator">=</span> <span class="variable">G<sub>max</sub></span> <span class="operator">&times;</span> <span class="symbol">cos</span>( <span class="variable">&theta;<sub>sun</sub></span> <span class="operator">-</span> <span class="symbol">30&deg;</span> )<br><br>
+                        <span class="variable">G<sub>tracked</sub></span> <span class="operator">=</span> <span class="variable">G<sub>max</sub></span> <span class="operator">&times;</span> <span class="symbol">cos</span>( <span class="symbol">0&deg;</span> ) <span class="operator">&times;</span> <span class="variable">Atmosphere_Factor</span>
+                    </div>
+
+                    <h6 class="section-title">6.2 Dust & Soiling Attenuation</h6>
+                    <p class="small text-light opacity-75 mb-1">Accumulative efficiency drop over dry days in Cairo.</p>
+                    <div class="formula-block">
+                        <span class="variable">Derating Factor</span> <span class="operator">=</span> <span class="symbol">1</span> <span class="operator">-</span> ( <span class="variable">Days</span> <span class="operator">&times;</span> <span class="symbol">0.004</span> )
+                    </div>
+
+                    <h6 class="section-title">6.3 Bifacial Albedo Rear Yield</h6>
+                    <p class="small text-light opacity-75 mb-1">Calculates backside generation based on surface reflection.</p>
+                    <div class="formula-block mb-0">
+                        <span class="variable">P<sub>rear</sub></span> <span class="operator">=</span> <span class="variable">P<sub>front</sub></span> <span class="operator">&times;</span> <span class="variable">Albedo_Factor</span> <span class="operator">&times;</span> <span class="symbol">0.70</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="math-card">
+                <div class="card-category bg-finance"><i class="fa-solid fa-chart-line me-2"></i>7. Financials & System Sizing</div>
+                <div class="p-4">
+
+                    <h6 class="section-title">7.1 Rooftop Sizing & Daily Target</h6>
+                    <div class="formula-block">
+                        <span class="variable">Monthly kWh</span> <span class="operator">=</span> <span class="variable">Bill (EGP)</span> <span class="operator">/</span> <span class="symbol">1.5 EGP/kWh</span><br><br>
+                        <span class="variable">Daily kWh Target</span> <span class="operator">=</span> <span class="variable">Monthly kWh</span> <span class="operator">/</span> <span class="symbol">30</span>
+                    </div>
+
+                    <h6 class="section-title">7.2 Panel Daily Yield Estimate</h6>
+                    <div class="formula-block">
+                        <span class="variable">Panel kWh/Day</span> <span class="operator">=</span> ( <span class="variable">P<sub>panel</sub></span> <span class="operator">/</span> <span class="symbol">1000</span> ) <span class="operator">&times;</span> <span class="symbol">5.3h</span> (Peak Sun) <span class="operator">&times;</span> <span class="symbol">0.8</span> (Derate)
+                    </div>
+
+                    <h6 class="section-title">7.3 Financial Waste Rate (Soiling)</h6>
+                    <p class="small text-light opacity-75 mb-1">Translates lost Watts into monetary loss per month.</p>
+                    <div class="formula-block mb-0">
+                        <span class="variable">Lost EGP</span> <span class="operator">=</span> <span class="variable">&Delta;kW</span> <span class="operator">&times;</span> <span class="symbol">5h</span> <span class="operator">&times;</span> <span class="symbol">30d</span> <span class="operator">&times;</span> <span class="variable">Panels</span> <span class="operator">&times;</span> <span class="symbol">2.0 EGP</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

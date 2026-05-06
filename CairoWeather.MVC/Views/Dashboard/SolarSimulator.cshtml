@@ -1,0 +1,346 @@
+﻿@{
+    ViewData["Title"] = "PV Thermodynamic Simulator";
+}
+
+<style>
+    .simulator-card {
+        background: #0f172a;
+        border-radius: 20px;
+        border: 1px solid #334155;
+        overflow: hidden;
+    }
+
+    .visualizer-screen {
+        height: 350px;
+        background: linear-gradient(to bottom, #1e293b, #0f172a);
+        position: relative;
+        overflow: hidden;
+        border-bottom: 2px solid #334155;
+    }
+
+    /* --- SUN ANIMATION --- */
+    .sun-orb {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: #fbbf24;
+        border-radius: 50%;
+        box-shadow: 0 0 40px #fbbf24, 0 0 80px #f59e0b;
+        transition: all 0.2s ease-out;
+        bottom: 0;
+        left: 0;
+    }
+
+    /* --- PV PANEL 3D --- */
+    .pv-panel-container {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        perspective: 800px;
+    }
+
+    .pv-panel {
+        width: 280px;
+        height: 160px;
+        background: repeating-linear-gradient(90deg, #1e40af, #1e40af 24px, #1d4ed8 25px);
+        border: 5px solid #cbd5e1;
+        border-radius: 8px;
+        transform: rotateX(60deg);
+        box-shadow: 0 20px 30px rgba(0,0,0,0.8);
+        transition: box-shadow 0.5s, background 0.5s;
+        position: relative;
+    }
+
+    /* Thermal Glow when hot */
+    .thermal-stress {
+        box-shadow: 0 20px 50px rgba(239, 68, 68, 0.6), inset 0 0 40px rgba(239, 68, 68, 0.4);
+        border-color: #fca5a5;
+    }
+
+    /* Water cooling active */
+    .cooling-active {
+        box-shadow: 0 20px 50px rgba(56, 189, 248, 0.6), inset 0 0 40px rgba(56, 189, 248, 0.5);
+        border-color: #7dd3fc;
+    }
+
+    /* --- METRICS DASHBOARD --- */
+    .metric-box {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 15px;
+        height: 100%;
+    }
+
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .metric-value {
+        color: #f8fafc;
+        font-size: 1.8rem;
+        font-weight: 800;
+        font-family: monospace;
+    }
+
+    .slider-container {
+        padding: 20px;
+        background: #1e293b;
+    }
+
+    .form-range::-webkit-slider-thumb {
+        background: #fbbf24;
+    }
+
+    /* كارت المعادلات (The Math Engine) - البنفسجي النيون */
+    .glow-engine {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px dashed #8b5cf6 !important;
+        box-shadow: inset 0 0 30px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.2) !important;
+        transition: all 0.3s ease;
+    }
+
+        .glow-engine:hover {
+            box-shadow: inset 0 0 40px rgba(139, 92, 246, 0.25), 0 0 30px rgba(139, 92, 246, 0.3) !important;
+        }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="simulator-card shadow-lg">
+            <div class="visualizer-screen" id="skyScreen">
+                <div class="sun-orb" id="sun"></div>
+                <div class="pv-panel-container">
+                    <div class="pv-panel" id="mainPanel"></div>
+                </div>
+            </div>
+
+            <div class="slider-container">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-light fw-bold">Time of Day: <span id="timeDisplay" class="text-warning">06:00 AM</span></span>
+                    <button class="btn btn-sm btn-outline-info fw-bold" id="btnCooling" onclick="toggleCooling()">
+                        <i class="fa-solid fa-snowflake me-1"></i> Activate Water Cooling
+                    </button>
+                </div>
+                <input type="range" class="form-range" min="6" max="18" step="0.5" value="6" id="timeSlider" oninput="runPhysicsEngine()">
+                <div class="d-flex justify-content-between text-muted small mt-1">
+                    <span>Sunrise (6 AM)</span>
+                    <span>Solar Noon (12 PM)</span>
+                    <span>Sunset (6 PM)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="row g-3 h-100">
+            <div class="col-6">
+                <div class="metric-box" style="border-left: 4px solid #fbbf24;">
+                    <div class="metric-title">Effective Irradiance</div>
+                    <div class="metric-value text-warning"><span id="valIrradiance">0</span> <span style="font-size:1rem;">W/m&sup2;</span></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="metric-box" style="border-left: 4px solid #10b981;">
+                    <div class="metric-title">Actual Output (500W)</div>
+                    <div class="metric-value text-success"><span id="valPower">0</span> <span style="font-size:1rem;">W</span></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="metric-box" style="border-left: 4px solid #94a3b8;">
+                    <div class="metric-title">Ambient Temp (T_air)</div>
+                    <div class="metric-value"><span id="valAirTemp">22.0</span> <span style="font-size:1rem;">&deg;C</span></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="metric-box" id="cellTempBox" style="border-left: 4px solid #ef4444;">
+                    <div class="metric-title">Cell Temp (T_cell)</div>
+                    <div class="metric-value"><span id="valCellTemp">22.0</span> <span style="font-size:1rem;">&deg;C</span></div>
+                    <div class="small mt-1 text-danger fw-bold" id="thermalAlert"></div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="metric-box" style="border-left: 4px solid #f43f5e;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-title">Thermal Efficiency Loss</div>
+                            <div class="text-muted small">Equation: -0.4% per &deg;C above 25&deg;C</div>
+                        </div>
+                        <div class="metric-value text-danger"><span id="valLoss">0.0</span>%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm glow-engine">
+            <div class="card-body p-4 text-white">
+                <h4 class="fw-bold mb-4"><i class="fa-solid fa-microchip text-primary me-2"></i>Physics Engine Constants & Modeling</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <h6 class="text-primary fw-bold text-uppercase small mb-3">Engine Constants (Standard)</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+                            <ul class="list-unstyled mb-0 small" style="line-height: 2.2;">
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Panel Rated Power (P_ideal):</span>
+                                    <span class="text-success fw-bold">500 W</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Max Irradiance (G_max):</span>
+                                    <span class="text-warning fw-bold">1000 W/m&sup2;</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Standard Test Temp (T_stc):</span>
+                                    <span class="text-info fw-bold">25 &deg;C</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Nominal Operating Temp (NOCT):</span>
+                                    <span class="text-warning fw-bold">45 &deg;C</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Temp Coefficient (&beta;):</span>
+                                    <span class="text-danger fw-bold">-0.4% / &deg;C</span>
+                                </li>
+                                <li class="d-flex justify-content-between pt-1">
+                                    <span>Active Water Cooling Factor:</span>
+                                    <span class="text-info fw-bold">T_air + 2 &deg;C</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+                        <h6 class="text-primary fw-bold text-uppercase small mb-3">Real-time Simulation Logic</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark font-monospace" style="font-size: 0.9rem; line-height: 1.8;">
+                            <div class="text-warning mb-1">// 1. Irradiance (G) follows a sinusoidal arc peaking at Noon</div>
+                            <div class="text-light mb-3">G = MAX(0, sin(TimeProgress &times; &pi;) &times; 1000)</div>
+
+                            <div class="text-danger mb-1">// 2. Cell Temp (T_c) accounts for radiation absorption heat</div>
+                            <div class="text-light mb-3">T_cell = T_air + [(NOCT - 20) / 800] &times; G</div>
+
+                            <div class="text-info mb-1">// 3. Efficiency Loss drops 0.4% for every degree above 25&deg;C</div>
+                            <div class="text-light mb-3">Loss_% = (T_cell - 25) &times; 0.4</div>
+
+                            <div class="text-success mb-1">// 4. Actual Power Output applies the thermal penalty</div>
+                            <div class="text-light">Actual_Power = P_ideal &times; (G / 1000) &times; (1 - [Loss_% / 100])</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let isCoolingActive = false;
+
+        function toggleCooling() {
+            isCoolingActive = !isCoolingActive;
+            const btn = document.getElementById('btnCooling');
+            const panel = document.getElementById('mainPanel');
+
+            if(isCoolingActive) {
+                btn.classList.replace('btn-outline-info', 'btn-info');
+                btn.classList.add('text-dark');
+                btn.innerHTML = '<i class="fa-solid fa-water me-1"></i> Cooling Active';
+                panel.classList.add('cooling-active');
+            } else {
+                btn.classList.replace('btn-info', 'btn-outline-info');
+                btn.classList.remove('text-dark');
+                btn.innerHTML = '<i class="fa-solid fa-snowflake me-1"></i> Activate Water Cooling';
+                panel.classList.remove('cooling-active');
+            }
+            runPhysicsEngine(); // Recalculate immediately
+        }
+
+        function runPhysicsEngine() {
+            // 1. Read Time
+            const hour = parseFloat(document.getElementById('timeSlider').value);
+
+            // Format display time
+            let hrs = Math.floor(hour);
+            let mins = (hour % 1) === 0 ? "00" : "30";
+            let ampm = hrs >= 12 ? "PM" : "AM";
+            let displayHr = hrs > 12 ? hrs - 12 : hrs;
+            if(displayHr === 0) displayHr = 12;
+            document.getElementById('timeDisplay').innerText = `${displayHr < 10 ? '0':''}${displayHr}:${mins} ${ampm}`;
+
+            // 2. Sun Movement Arc (Math.sin for height, linear for width)
+            // Hour range: 6 to 18 (12 hours total)
+            const progress = (hour - 6) / 12; // 0 to 1
+            const sun = document.getElementById('sun');
+            const screenWidth = document.getElementById('skyScreen').offsetWidth;
+            const screenHeight = document.getElementById('skyScreen').offsetHeight;
+
+            let sunX = progress * (screenWidth - 60); // 60 is sun width
+            let sunY = Math.sin(progress * Math.PI) * (screenHeight - 100);
+
+            sun.style.left = `${sunX}px`;
+            sun.style.bottom = `${sunY}px`;
+
+            // 3. PHYSICS & THERMODYNAMICS MATH
+            // A. Irradiance (G) peaks at 1000 W/m² at solar noon (hour 12)
+            let irradiance = Math.max(0, Math.sin(progress * Math.PI) * 1000);
+
+            // B. Air Temp starts at 22°C (6 AM), peaks at 38°C (2 PM / hour 14)
+            // using a delayed sine wave
+            let tempProgress = (hour - 6) / 14;
+            if(tempProgress > 1) tempProgress = 1;
+            let airTemp = 22 + (Math.sin(tempProgress * Math.PI) * 16);
+
+            // C. Cell Temperature (T_cell) using NOCT Formula
+            // Formula: T_cell = T_air + ((NOCT - 20) / 800) * G
+            let cellTemp = airTemp + ((45 - 20) / 800) * irradiance;
+
+            // Apply Cooling effect (Drops cell temp drastically)
+            if(isCoolingActive) {
+                cellTemp = airTemp + 2; // Water keeps it very close to ambient air
+            }
+
+            // D. Thermal Loss (0.4% loss for every degree above standard 25°C)
+            let thermalLossPercent = 0;
+            if (cellTemp > 25) {
+                thermalLossPercent = (cellTemp - 25) * 0.4;
+            }
+
+            // E. Power Output (Base Panel = 500W)
+            // Ideal Power = 500W * (Irradiance / 1000)
+            let idealPower = 500 * (irradiance / 1000);
+            let actualPower = idealPower * (1 - (thermalLossPercent / 100));
+
+            // 4. UPDATE UI
+            document.getElementById('valIrradiance').innerText = irradiance.toFixed(0);
+            document.getElementById('valAirTemp').innerText = airTemp.toFixed(1);
+            document.getElementById('valCellTemp').innerText = cellTemp.toFixed(1);
+            document.getElementById('valLoss').innerText = thermalLossPercent.toFixed(1);
+            document.getElementById('valPower').innerText = actualPower.toFixed(0);
+
+            // Panel Visual Thermal Stress
+            const panel = document.getElementById('mainPanel');
+            const alertBox = document.getElementById('thermalAlert');
+
+            if(cellTemp > 45 && !isCoolingActive) {
+                panel.classList.add('thermal-stress');
+                alertBox.innerHTML = '<i class="fa-solid fa-fire me-1"></i> High Thermal Stress!';
+            } else {
+                panel.classList.remove('thermal-stress');
+                alertBox.innerHTML = '';
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            runPhysicsEngine();
+        };
+    </script>
+}

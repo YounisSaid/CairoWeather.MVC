@@ -1,7 +1,9 @@
+using CairoWeather.Core.Services;
 using CairoWeather.Data.DbContexts;
 using CairoWeather.MVC.Data.Seeding;
 using CairoWeather.Services;
 using Microsoft.EntityFrameworkCore;
+
 public partial class Program
 {
     private static async Task Main(string[] args)
@@ -10,41 +12,61 @@ public partial class Program
 
         // 1. Register the Database Context (SQL Server)
         builder.Services.AddDbContext<EnergyDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+      options.UseSqlServer(
+          builder.Configuration.GetConnectionString("DefaultConnection"),
+          sqlServerOptionsAction: sqlOptions =>
+          {
+              // This is the magic line that fixes the crash
+              sqlOptions.EnableRetryOnFailure(
+                  maxRetryCount: 5,
+                  maxRetryDelay: TimeSpan.FromSeconds(30),
+                  errorNumbersToAdd: null);
+          }));
 
         // 2. Register Analytics Services (Scoped)
+        // Note: Make sure IWeatherAnalyticsService matches your actual interface name!
         builder.Services.AddScoped<IWeatherAnalyticsService, WeatherAnalyticsService>();
 
         // 3. Register the Data Seeder
         builder.Services.AddScoped<DataSeeder>();
 
         // Add services to the container.
-        builder.Services.AddControllersWithViews();
+        builder.Services.AddControllersWithViews(); // For HTML Views
+        builder.Services.AddControllers();          // ADD THIS: Explicit support for API Controllers
 
         var app = builder.Build();
 
-        // 4. Trigger Data Seeding on Startup
-        // This scope ensures the database is populated before the web server starts handling requests
+        // 4. Trigger Data Seeding and Migrations on Startup
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
             try
             {
-                // Use WebRootPath so it looks inside wwwroot!
+                var context = services.GetRequiredService<EnergyDbContext>();
                 var env = services.GetRequiredService<IWebHostEnvironment>();
-                string hourlyPath = Path.Combine(env.WebRootPath, "open-meteo-30.05N31.19E22m (2).csv");
-                string dailyPath = Path.Combine(env.WebRootPath, "open-meteo-30.05N31.19E22m (4).csv");
 
-                // Force the seeder to run
-                var seeder = services.GetRequiredService<DataSeeder>();
-                seeder.SeedAllDataAsync(hourlyPath, dailyPath).Wait();
+                // Auto-apply any pending database migrations
+                await context.Database.MigrateAsync();
 
+                // Path to our single source of truth (Hourly CSV)
+                string csvPath = Path.Combine(env.WebRootPath, "open-meteo-30.05N31.19E22m (2).csv");
+
+                // Check if file exists before seeding to avoid silent errors
+                if (File.Exists(csvPath))
+                {
+                    var seeder = services.GetRequiredService<DataSeeder>();
+                    await seeder.SeedAllDataAsync(csvPath);
+                }
+                else
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogWarning("Seeding skipped: CSV file not found at {Path}", csvPath);
+                }
             }
             catch (Exception ex)
             {
-                // Log errors if seeding fails
                 var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "An error occurred during the initial data seeding process.");
+                logger.LogError(ex, "An error occurred during database migration or seeding.");
             }
         }
 
@@ -63,9 +85,12 @@ public partial class Program
         app.UseAuthorization();
 
         app.MapControllerRoute(
-            name: "default",
-            pattern: "{controller=Dashboard}/{action=Index}/{id?}");
+              name: "default",
+              pattern: "{controller=Dashboard}/{action=Hourly}/{id?}");
 
-        app.Run();
+        // ADD THIS: API Attribute Routing
+        app.MapControllers();
+
+        await app.RunAsync();
     }
 }

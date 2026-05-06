@@ -1,5 +1,6 @@
 ﻿using CairoWeather.Core.Models;
 using Microsoft.EntityFrameworkCore;
+
 namespace CairoWeather.Data.DbContexts
 {
     public class EnergyDbContext : DbContext
@@ -8,28 +9,27 @@ namespace CairoWeather.Data.DbContexts
         {
         }
 
-        public DbSet<HourlyReading> HourlyReadings { get; set; }
-        public DbSet<DailyReading> DailyReadings { get; set; }
+        public DbSet<HourlyReading> HourlyReadings { get; set; } = null!;
+        public DbSet<TmyReading> TmyReadings { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Indexing for high-speed lookups in Section 1 (Hourly)
+            // الميزة السحرية TPC: تفصل الجدولين تماماً وتمنع دمجهم
+            modelBuilder.Entity<HourlyReading>().UseTpcMappingStrategy();
+
+            // 1. إعدادات جدول الداتا التاريخية
             modelBuilder.Entity<HourlyReading>()
-                .HasIndex(h => h.Time);
+                .ToTable("HourlyReadings")
+                .HasIndex(h => h.Time)
+                .IsUnique();
 
-            // Indexing for high-speed aggregation in Section 2 & 3 (Yearly/Decade)
-            modelBuilder.Entity<DailyReading>()
-                .HasIndex(d => d.Date);
-
-            // Mapping doubles to float in SQL Server for scientific precision
-            foreach (var property in modelBuilder.Model.GetEntityTypes()
-                .SelectMany(t => t.GetProperties())
-                .Where(p => p.ClrType == typeof(double)))
-            {
-                property.SetColumnType("float");
-            }
+            // 2. إعدادات جدول سنة الـ TMY
+            modelBuilder.Entity<TmyReading>()
+                .ToTable("TmyReadings")
+                .HasIndex(h => h.Time)
+                .IsUnique();
         }
     }
 }

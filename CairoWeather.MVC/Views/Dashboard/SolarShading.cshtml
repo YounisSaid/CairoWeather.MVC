@@ -1,0 +1,194 @@
+﻿@{
+    ViewData["Title"] = "Partial Shading & Bypass Diodes";
+}
+<style>
+    .simulator-card {
+        background: #0f172a;
+        border-radius: 20px;
+        border: 1px solid #1e3a8a;
+        overflow: hidden;
+    }
+
+    .visualizer-screen {
+        height: 350px;
+        background: #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .pv-module {
+        display: flex;
+        gap: 5px;
+        padding: 10px;
+        background: #cbd5e1;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .pv-string {
+        width: 80px;
+        height: 180px;
+        background: #1e40af;
+        border: 2px solid #0f172a;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .pv-string:hover {
+            box-shadow: 0 0 15px #f8fafc;
+        }
+
+    .shaded {
+        background: #334155 !important;
+        border-color: #000 !important;
+    }
+
+    .diode-bridge {
+        position: absolute;
+        bottom: -40px;
+        width: 40px;
+        height: 20px;
+        border: 2px solid #64748b;
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        border-top-color: transparent;
+    }
+
+    .diode-indicator {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #64748b;
+        margin-top: 150px;
+        transition: 0.3s;
+        box-shadow: 0 0 5px #000;
+    }
+
+    .diode-active {
+        background: #ef4444 !important;
+        box-shadow: 0 0 15px #ef4444, 0 0 30px #ef4444 !important;
+    }
+
+    .metric-box {
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
+        height: 100%;
+    }
+
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        font-family: monospace;
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="simulator-card shadow-lg h-100">
+            <div class="visualizer-screen">
+                <div class="text-white text-center position-absolute top-0 w-100 pt-3 opacity-50"><i class="fa-solid fa-hand-pointer me-2"></i>Click any panel string to cast a shadow</div>
+                <div class="pv-module">
+                    <div class="pv-string" id="str1" onclick="toggleShade(1)">
+                        <div class="diode-indicator" id="diode1"></div>
+                        <div class="diode-bridge" style="left:20px;"></div>
+                    </div>
+                    <div class="pv-string" id="str2" onclick="toggleShade(2)">
+                        <div class="diode-indicator" id="diode2"></div>
+                        <div class="diode-bridge" style="left:20px;"></div>
+                    </div>
+                    <div class="pv-string" id="str3" onclick="toggleShade(3)">
+                        <div class="diode-indicator" id="diode3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 bg-dark text-white border-top border-secondary">
+                <h6 class="text-warning"><i class="fa-solid fa-bolt me-2"></i>Diode Status Terminal</h6>
+                <div id="terminalLog" class="small text-muted" style="font-family: monospace;">System Healthy. All strings producing.</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="row g-3 h-100">
+            <div class="col-6"><div class="metric-box" style="border-left:4px solid #10b981;"><div class="metric-title">Ideal Output</div><div class="metric-value text-success">300 W</div></div></div>
+            <div class="col-6"><div class="metric-box" style="border-left:4px solid #f59e0b;"><div class="metric-title">Actual Output</div><div class="metric-value text-warning"><span id="valOutput">300</span> W</div></div></div>
+            <div class="col-12">
+                <div class="metric-box" style="background: rgba(15, 23, 42, 0.9); border: 1px dashed #ef4444;">
+                    <div class="metric-title text-danger mb-2"><i class="fa-solid fa-microchip me-2"></i>Bypass Logic</div>
+                    <div class="text-light small" style="font-family: monospace; line-height: 1.8;">
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-1">
+                            <span class="text-light fw-bold">P<sub>total</sub> (No Diodes)</span>
+                            <span class="text-danger fw-bold">0 W (If any shade)</span>
+                        </div>
+                        <div class="d-flex justify-content-between pt-1">
+                            <span class="text-light fw-bold">P<sub>total</sub> (With Diodes)</span>
+                            <span class="text-success fw-bold">P<sub>active</sub> - P<sub>diode_loss</sub></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let strings = { 1: false, 2: false, 3: false }; // false = clean, true = shaded
+
+        function toggleShade(id) {
+            strings[id] = !strings[id];
+            const strEl = document.getElementById('str' + id);
+            const diodeEl = document.getElementById('diode' + id);
+
+            if (strings[id]) {
+                strEl.classList.add('shaded');
+                diodeEl.classList.add('diode-active');
+            } else {
+                strEl.classList.remove('shaded');
+                diodeEl.classList.remove('diode-active');
+            }
+            calculatePower();
+        }
+
+        function calculatePower() {
+            let activeStrings = 0;
+            let activeDiodes = 0;
+            let logs = [];
+
+            for(let i=1; i<=3; i++) {
+                if(!strings[i]) {
+                    activeStrings++;
+                    logs.push(`String ${i}: Clear (100W)`);
+                } else {
+                    activeDiodes++;
+                    logs.push(`<span class="text-danger">String ${i}: Shaded (Bypassed)</span>`);
+                }
+            }
+
+            let power = activeStrings * 100; // 100W per string
+            // Diode forward voltage drop loss (approx 1W per active diode)
+            power = power - (activeDiodes * 1);
+
+            document.getElementById('valOutput').innerText = Math.max(0, power);
+
+            const logBox = document.getElementById('terminalLog');
+            if(activeDiodes === 0) logBox.innerHTML = "System Healthy. All strings producing.";
+            else logBox.innerHTML = logs.join('<br>');
+        }
+    </script>
+}

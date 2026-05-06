@@ -1,0 +1,189 @@
+﻿@{
+    ViewData["Title"] = "1-Year Seasonality";
+    Layout = "_Layout";
+}
+
+<style>
+    /* Formula Syntax Highlighting */
+    .formula-block {
+        background: #0f172a;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.05rem;
+        color: #f8fafc;
+        border: 1px solid #000;
+        margin: 10px 0 20px 0;
+        text-align: center;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .symbol {
+        color: #fbbf24;
+        font-weight: bold;
+    }
+
+    .operator {
+        color: #94a3b8;
+        margin: 0 5px;
+    }
+
+    .variable {
+        color: #38bdf8;
+    }
+
+    .unit {
+        color: #10b981;
+        font-size: 0.85rem;
+        margin-left: 5px;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 card p-3 shadow-sm border time-control-card" style="border-left-color: #3b82f6;">
+    <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-calendar-days text-primary me-2"></i>365-Day Earth/Sun Analytics</h5>
+    <div class="d-flex align-items-center gap-2">
+        <label for="yearPicker" class="fw-bold mb-0">Select Year:</label>
+        <select id="yearPicker" class="form-select fw-bold border-secondary">
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022" selected>2022</option>
+            <option value="2021">2021</option>
+            <option value="2020">2020</option>
+            <option value="2019">2019</option>
+            <option value="2018">2018</option>
+            <option value="2017">2017</option>
+            <option value="2016">2016</option>
+            <option value="2015">2015</option>
+        </select>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">1. Annual Radiative Hysteresis</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="y1"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Demonstrates the seasonal thermal lag of the environment. Note how peak heat lags behind peak sunlight.</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">2. Photo-Thermal Units</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="y2"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Calculates PTU (Growing Degree Days x GHI), vital for analyzing agro-voltaic potential.</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">3. Radiative Aridity Index</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="y3"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Compares Net Radiation against latent heat and precipitation.</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">4. Net Longwave Seasonality</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="y7"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Measures outgoing nighttime radiation losses, driving nocturnal module cooling.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-top: 4px solid #3b82f6 !important;">
+            <div class="card-body p-4">
+                <h4 class="text-dark fw-bold mb-4"><i class="fa-solid fa-book-open-reader text-primary me-2"></i>Yearly Aggregations & Physics Documentation</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-earth-africa me-2"></i>Macro-Climate & Thermal Retention</h5>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-temperature-arrow-up text-danger me-2"></i>Graph 1: Annual Radiative Hysteresis</h6>
+                            <p class="text-muted small mb-2">Visualizes the macro-scale "Thermal Lag" of the Earth's surface. While solar radiation reaches its absolute maximum at the summer solstice (June 21), ambient temperatures typically do not peak until July or August due to the high specific heat capacity of the earth and oceans.</p>
+
+                            <div class="formula-block mb-2">
+                                <span class="variable">&Delta;t<sub>lag</sub></span> <span class="operator">=</span> <span class="variable">Month</span>( <span class="variable">T<sub>max</sub></span> ) <span class="operator">-</span> <span class="variable">Month</span>( <span class="variable">GHI<sub>max</sub></span> )
+                            </div>
+
+                            <ul class="text-muted small mb-0" style="padding-left: 1.5rem;">
+                                <li><strong>Parameter 1:</strong> <code>Monthly Avg GHI</code> (W/m&sup2;)</li>
+                                <li><strong>Parameter 2:</strong> <code>Monthly Avg Temperature</code> (&deg;C)</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-moon text-secondary me-2"></i>Graph 4: Net Longwave Radiation</h6>
+                            <p class="text-muted small mb-2">Dictates nocturnal energy loss. Net longwave is the difference between downward atmospheric radiation and upward terrestrial radiation. Clear winter nights yield the highest negative values, leading to severe frost accumulation on solar panels.</p>
+
+                            <div class="formula-block mb-2">
+                                <span class="variable">L<sub>net</sub></span> <span class="operator">=</span> <span class="variable">L<sub>down</sub></span> <span class="operator">-</span> <span class="variable">L<sub>up</sub></span> <span class="operator">&approx;</span> <span class="symbol">-</span><span class="variable">&epsilon;&sigma;T</span><sup>4</sup> <span class="unit">W/m&sup2;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-seedling me-2"></i>Agro-Voltaics & Moisture Dynamics</h5>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-leaf text-success me-2"></i>Graph 2: Photo-Thermal Units (PTU)</h6>
+                            <p class="text-muted small mb-2">The ultimate metric for Agro-voltaics (farming under solar panels). It cross-multiplies Growing Degree Days (thermal energy above a crop's base threshold, usually 10&deg;C) with actual solar irradiance to predict crop yield underneath arrays.</p>
+
+                            <div class="formula-block mb-2">
+                                <div class="mb-2"><span class="variable">GDD</span> <span class="operator">=</span> <span class="symbol">MAX</span>[ ( <span class="variable">T<sub>avg</sub></span> <span class="operator">-</span> <span class="symbol">10&deg;C</span> ) <span class="operator">/</span> <span class="symbol">24</span> , <span class="symbol">0</span> ]</div>
+                                <div><span class="variable">PTU</span> <span class="operator">=</span> <span class="symbol">&sum;</span> ( <span class="variable">GDD</span> <span class="operator">&times;</span> <span class="variable">GHI<sub>actual</sub></span> )</div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-water text-info me-2"></i>Graph 3: Radiative Aridity Index</h6>
+                            <p class="text-muted small mb-2">Evaluates desertification risks. It compares available net radiative energy (R<sub>n</sub>) against the energy required to evaporate all local precipitation (Latent Heat &lambda; &times; P). An index > 1 indicates a highly arid, water-deficient environment prone to dust storms.</p>
+
+                            <div class="formula-block mb-2">
+                                <span class="variable">Aridity Index (AI)</span> <span class="operator">=</span> <span class="variable">R<sub>n</sub></span> <span class="operator">/</span> ( <span class="variable">&lambda;</span> <span class="operator">&times;</span> <span class="variable">P</span> )
+                            </div>
+
+                            <ul class="text-muted small mb-0" style="padding-left: 1.5rem;">
+                                <li><strong>Parameter 1:</strong> <code>Net Radiation (R_n)</code></li>
+                                <li><strong>Parameter 2:</strong> <code>Latent Heat & Precipitation (&lambda;P)</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadYearlyData() {
+            const yearVal = document.getElementById('yearPicker').value;
+            if (!yearVal) return;
+            try {
+                const response = await fetch(`/api/weatheranalytics/yearly?year=${yearVal}`);
+                if (!response.ok) throw new Error("Network response was not ok");
+
+                const data = await response.json();
+                initChart('y1', 'line', { labels: data.annualRadiativeHysteresis.labels, datasets: createDatasets(data.annualRadiativeHysteresis.datasets) });
+                initChart('y2', 'bar', { labels: data.photoThermalUnits.labels, datasets: createDatasets(data.photoThermalUnits.datasets) });
+                initChart('y3', 'line', { labels: data.radiativeAridityIndex.labels, datasets: createDatasets(data.radiativeAridityIndex.datasets) });
+                initChart('y7', 'bar', { labels: data.netLongwaveSeasonality.labels, datasets: createDatasets(data.netLongwaveSeasonality.datasets) });
+            } catch (error) {
+                console.error("Error loading yearly data:", error);
+            }
+        }
+        document.getElementById('yearPicker').addEventListener('change', loadYearlyData);
+        window.onload = loadYearlyData;
+    </script>
+}

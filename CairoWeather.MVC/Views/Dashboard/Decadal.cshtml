@@ -1,0 +1,170 @@
+﻿@{
+    ViewData["Title"] = "10-Year Trends";
+    Layout = "_Layout";
+}
+
+<style>
+    /* Formula Syntax Highlighting */
+    .formula-block {
+        background: #0f172a;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.05rem;
+        color: #f8fafc;
+        border: 1px solid #000;
+        margin: 10px 0 20px 0;
+        text-align: center;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .symbol {
+        color: #fbbf24;
+        font-weight: bold;
+    }
+
+    .operator {
+        color: #94a3b8;
+        margin: 0 5px;
+    }
+
+    .variable {
+        color: #38bdf8;
+    }
+
+    .unit {
+        color: #10b981;
+        font-size: 0.85rem;
+        margin-left: 5px;
+    }
+</style>
+
+<div class="mb-4 bg-white p-4 rounded-4 shadow-sm border" style="border-left: 5px solid #3b82f6 !important;">
+    <h4 class="fw-bold mb-2"><i class="fa-solid fa-chart-line text-warning me-2"></i>10-Year Decadal Trends</h4>
+    <p class="text-muted mb-0">Long-term tracking of regional climate shifts (2015-2025).</p>
+</div>
+
+<div class="row">
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">1. Global Dimming Trend</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="d1"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Tracks long-term trends in solar influx (GHI).</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">2. Urban Radiative Decoupling</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="d2"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Tracks Urban Heat Island effect over the decade.</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">3. Decadal Cloud Cover Shift</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="d5"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Monitors macro-shifts in average annual cloud cover.</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">4. Sensible Heat Escalation</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="d6"></canvas></div>
+                <div class="analysis-text"><strong>Analysis:</strong> Models the conversion of solar radiation into dry heat.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-top: 4px solid #3b82f6 !important;">
+            <div class="card-body p-4">
+                <h4 class="text-dark fw-bold mb-4"><i class="fa-solid fa-book-open-reader text-primary me-2"></i>Decadal Aggregations & Physics Documentation</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-city me-2"></i>Urbanization & Attenuation</h5>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-temperature-arrow-up text-danger me-2"></i>Graph 2: Urban Radiative Decoupling (UHI)</h6>
+                            <p class="text-muted small mb-2">Quantifies the Urban Heat Island effect. As concrete and asphalt replace natural landscapes over a decade, ambient temperatures rise steadily even if incident solar radiation (GHI) remains flat or declines. The local temperature becomes "decoupled" from the raw solar input.</p>
+
+                            <div class="formula-block mb-2">
+                                <span class="variable">&Delta;T<sub>UHI</sub></span> <span class="operator">=</span> <span class="variable">T<sub>urban_actual</sub></span> <span class="operator">-</span> <span class="variable">T<sub>rural_baseline</sub></span>
+                            </div>
+
+                            <ul class="text-muted small mb-0" style="padding-left: 1.5rem;">
+                                <li><strong>Parameter 1:</strong> <code>Annual Avg Temp</code> (Trending upward)</li>
+                                <li><strong>Parameter 2:</strong> <code>Annual Avg GHI</code> (Plotted as a stable baseline)</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-cloud-sun text-warning me-2"></i>Graph 1: Global Dimming Trend</h6>
+                            <p class="text-muted small mb-2">Monitors the long-term reduction in direct irradiance reaching the Earth's surface. This is typically caused by increased atmospheric aerosols, pollution, or changes in the stratospheric composition over a 10-year period.</p>
+
+                            <div class="formula-block mb-2">
+                                <span class="variable">Dimming Rate</span> <span class="operator">=</span> <span class="symbol">&Delta;</span><span class="variable">GHI</span> <span class="operator">/</span> <span class="symbol">&Delta;</span><span class="variable">Decade</span> <span class="unit">W/m&sup2;/yr</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-fire-flame-simple me-2"></i>Atmospheric Thermodynamics</h5>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-fire text-danger me-2"></i>Graph 4: Sensible Heat Escalation</h6>
+                            <p class="text-muted small mb-2">Sensible heat (Q<sub>H</sub>) is the portion of absorbed solar energy that directly raises the air temperature (dry heat), as opposed to evaporating water (latent heat). Over a decade of aridification, a higher percentage of solar energy converts directly into sensible heat.</p>
+
+                            <div class="formula-block mb-2">
+                                <span class="variable">Q<sub>H</sub></span> <span class="operator">=</span> <span class="variable">&rho;</span> <span class="operator">&times;</span> <span class="variable">C<sub>p</sub></span> <span class="operator">&times;</span> <span class="symbol">&Delta;</span><span class="variable">T</span> <span class="unit">W/m&sup2;</span>
+                            </div>
+
+                            <ul class="text-muted small mb-0" style="padding-left: 1.5rem;">
+                                <li><strong>Variable:</strong> <code>&rho;</code> (Air Density)</li>
+                                <li><strong>Variable:</strong> <code>C_p</code> (Specific heat capacity of air)</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc;">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-cloud text-secondary me-2"></i>Graph 3: Decadal Cloud Cover Shift</h6>
+                            <p class="text-muted small mb-2">Evaluates macro-scale changes in cloud fraction over the 10-year span. An upward shift in cloud cover heavily impacts the long-term bankability and yield forecasts (P50/P90) of utility-scale solar farms.</p>
+
+                            <div class="formula-block mb-2">
+                                <span class="symbol">&Delta;</span><span class="variable">Albedo<sub>atmospheric</sub></span> <span class="operator">&prop;</span> <span class="symbol">&Delta;</span><span class="variable">Cloud_Fraction</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadDecadalData() {
+            try {
+                const response = await fetch(`/api/weatheranalytics/decadal?startYear=2015&endYear=2025`);
+                if (!response.ok) throw new Error("Network response was not ok");
+
+                const data = await response.json();
+                initChart('d1', 'line', { labels: data.globalDimmingTrend.labels, datasets: createDatasets(data.globalDimmingTrend.datasets) });
+                initChart('d2', 'line', { labels: data.urbanRadiativeDecoupling.labels, datasets: createDatasets(data.urbanRadiativeDecoupling.datasets) });
+                initChart('d5', 'line', { labels: data.decadalCloudCoverShift.labels, datasets: createDatasets(data.decadalCloudCoverShift.datasets) });
+                initChart('d6', 'line', { labels: data.sensibleHeatEscalation.labels, datasets: createDatasets(data.sensibleHeatEscalation.datasets) });
+            } catch (error) {
+                console.error("Error loading decadal data:", error);
+            }
+        }
+        window.onload = loadDecadalData;
+    </script>
+}

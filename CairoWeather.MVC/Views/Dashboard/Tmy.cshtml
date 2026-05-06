@@ -1,0 +1,164 @@
+﻿@{
+    ViewData["Title"] = "TMY Baseline (2025)";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-success fw-bolder m-0"><i class="fa-solid fa-calendar-check me-2"></i>TMY Baseline (2025)</h2>
+        <p class="text-muted m-0">Standardized ideal meteorological year for system design</p>
+    </div>
+</div>
+
+<div class="card time-control-card p-4 mb-4" style="border-left-color: #10b981;">
+    <div class="row align-items-center">
+        <div class="col-md-3 text-center text-md-start mb-3 mb-md-0">
+            <input type="date" id="datePicker" class="form-control mb-2 fw-bold text-success border-success" value="2025-07-15" min="2025-01-01" max="2025-12-31">
+            <div class="small text-success mt-1"><i class="fa-solid fa-lock me-1"></i> Locked to 2025 Baseline</div>
+
+            <div class="selected-time-display mt-2" id="displayTime" style="color: #10b981;">12:00 PM</div>
+            <div class="text-muted small mt-1" id="dayPhaseLabel">Midday / Peak Heat</div>
+        </div>
+        <div class="col-md-9">
+            <label for="hourSlider" class="form-label fw-bold"><i class="fa-solid fa-sliders me-2"></i>Drag to inspect 24-hour exact conditions</label>
+            <input type="range" class="form-range" min="0" max="23" step="1" id="hourSlider" value="12">
+            <div class="d-flex justify-content-between text-muted small mt-1">
+                <span>Midnight</span><span>6:00 AM</span><span>Noon</span><span>6:00 PM</span><span>11:00 PM</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-4 col-md-6 mb-3"><div class="card p-3 h-100 mb-0 shadow-sm border"><div class="d-flex justify-content-between"><div><div class="stat-label">Temperature</div><div class="stat-value" id="valTemp">-- °C</div><div class="small text-muted mt-1">Feels like: <span id="valAppTemp" class="fw-bold text-dark">-- °C</span></div></div><div class="icon-box bg-red-light"><i class="fa-solid fa-temperature-half"></i></div></div></div></div>
+    <div class="col-lg-4 col-md-6 mb-3"><div class="card p-3 h-100 mb-0 shadow-sm border"><div class="d-flex justify-content-between"><div><div class="stat-label">Cloud Cover</div><div class="stat-value" id="valCloud">-- %</div><div class="small text-muted mt-1">Cloud Cover %</div></div><div class="icon-box bg-yellow-light"><i class="fa-solid fa-sun"></i></div></div></div></div>
+    <div class="col-lg-4 col-md-6 mb-3"><div class="card p-3 h-100 mb-0 shadow-sm border"><div class="d-flex justify-content-between"><div><div class="stat-label">Wind Profile (100m)</div><div class="stat-value" id="valWind">-- km/h</div><div class="small text-muted mt-1">Gusts: <span id="valGusts" class="fw-bold text-dark">-- km/h</span></div></div><div class="icon-box bg-green-light"><i class="fa-solid fa-wind"></i></div></div></div></div>
+    <div class="col-lg-4 col-md-6 mb-3"><div class="card p-3 h-100 mb-0 shadow-sm border"><div class="d-flex justify-content-between"><div><div class="stat-label">Humidity & VPD</div><div class="stat-value" id="valHum">-- %</div><div class="small text-muted mt-1">VPD: <span id="valVpd" class="fw-bold text-dark">-- kPa</span></div></div><div class="icon-box bg-blue-light"><i class="fa-solid fa-droplet"></i></div></div></div></div>
+    <div class="col-lg-4 col-md-6 mb-3"><div class="card p-3 h-100 mb-0 shadow-sm border"><div class="d-flex justify-content-between"><div><div class="stat-label">Dew Point</div><div class="stat-value" id="valDew">-- °C</div><div class="small text-muted mt-1">Condensation risk</div></div><div class="icon-box bg-indigo-light"><i class="fa-solid fa-cloud-showers-water"></i></div></div></div></div>
+    <div class="col-lg-4 col-md-6 mb-3"><div class="card p-3 h-100 mb-0 shadow-sm border"><div class="d-flex justify-content-between"><div><div class="stat-label">Pressure & ET₀</div><div class="stat-value" id="valPress">-- hPa</div><div class="small text-muted mt-1">ET₀: <span id="valEt0" class="fw-bold text-dark">-- mm</span></div></div><div class="icon-box bg-slate-light"><i class="fa-solid fa-gauge-high"></i></div></div></div></div>
+</div>
+
+<div class="row">
+    <div class="col-xl-6 mb-4"><div class="card h-100"><div class="card-header">1. Radiation vs Air Temp</div><div class="card-body"><div class="chart-container"><canvas id="h1"></canvas></div><div class="analysis-text"><strong>Analysis:</strong> Tracks ambient temperature alongside solar radiation. Notice the thermal time lag.</div></div></div></div>
+    <div class="col-xl-6 mb-4"><div class="card h-100"><div class="card-header">2. Wind Shear Profile</div><div class="card-body"><div class="chart-container"><canvas id="h4"></canvas></div><div class="analysis-text"><strong>Analysis:</strong> Compares ground-level wind (10m) with turbine hub height (100m).</div></div></div></div>
+    <div class="col-xl-6 mb-4"><div class="card h-100"><div class="card-header">3. Cloud Cover</div><div class="card-body"><div class="chart-container"><canvas id="h5"></canvas></div><div class="analysis-text"><strong>Analysis:</strong> Monitors atmospheric cloud thickness and its impact on solar energy.</div></div></div></div>
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">4. Condensation Risk (Temp vs Dew Point)</div>
+            <div class="card-body">
+                <div class="chart-container"><canvas id="h9"></canvas></div>
+                <div class="analysis-text">
+                    <strong>Analysis:</strong> Tracks the gap between Air Temp and Dew Point. When lines intersect, condensation occurs, turning panel dust into thick mud.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-top: 4px solid #10b981 !important;">
+            <div class="card-body p-4">
+                <h4 class="text-dark fw-bold mb-4"><i class="fa-solid fa-book-open-reader text-success me-2"></i>Understanding TMY (Typical Meteorological Year)</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h5 class="text-success fw-bold"><i class="fa-solid fa-circle-question me-2"></i>What is it & Why use it?</h5>
+                        <p class="text-muted" style="line-height: 1.7;">
+                            A <strong>TMY (Typical Meteorological Year)</strong> is a collated dataset of 8,760 hourly readings designed to represent the typical weather conditions of a specific location over a long period (spanning our 2015-2025 dataset). It is constructed by stitching together the most "typical" historical months.
+                        </p>
+                        <ul class="text-muted" style="line-height: 1.7;">
+                            <li class="mb-2"><strong>Why not just average the data?</strong> Simple mathematical averaging destroys natural diurnal patterns (day/night swings) and neutralizes the extreme peaks necessary for properly stress-testing HVAC systems and Solar Inverters.</li>
+                            <li><strong>Why not simulate all 10 years?</strong> Computational efficiency. TMY provides 95% of the accuracy of a full decadal simulation in 1/10th the processing time, making it the industry standard for tools like PVsyst and EnergyPlus.</li>
+                        </ul>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-success fw-bold"><i class="fa-solid fa-gears me-2"></i>How is it Calculated?</h5>
+                        <p class="text-muted" style="line-height: 1.7;">
+                            The engine analyzes every month in the historical dataset using empirical distance formulas. It compares the long-term averages against individual months to find the closest match based on thermodynamic limits.
+                        </p>
+
+                        <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8fafc; font-family: monospace; font-size: 0.95rem;">
+                            <div class="fw-bold text-dark mb-1">Empirical Distance Formula:</div>
+                            <div class="text-primary mb-3">Distance = | T_avg - T_lta | + ( | GHI_avg - GHI_lta | / 100 )</div>
+
+                            <div class="text-muted small">
+                                <strong>Where:</strong><br />
+                                <strong>T_avg</strong> = Single Month Average Temperature<br />
+                                <strong>T_lta</strong> = Long-Term Average Temperature (10 Years)<br />
+                                <strong>GHI_avg</strong> = Single Month Average Global Horizontal Irradiance<br />
+                                <strong>GHI_lta</strong> = Long-Term Average GHI<br />
+                                <em>* GHI is divided by 100 to normalize its weight against temperature degrees.</em>
+                            </div>
+                        </div>
+                        <p class="text-muted small m-0">
+                            <i class="fa-solid fa-lightbulb text-warning me-1"></i>
+                            <em>The algorithm isolates the month with the lowest Distance score (closest to the 10-year average) and stitches its 720/744 hours directly into the 2025 Baseline dataset.</em>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentHourlyData = null;
+
+        async function loadHourlyData() {
+            const date = document.getElementById('datePicker').value;
+            if (!date) return;
+            try {
+                // إرسال isTmy=true لقراءة جدول سنة الأساس
+                const response = await fetch(`/api/weatheranalytics/hourly?date=${date}&isTmy=true`);
+                if (!response.ok) throw new Error("No data found");
+                const data = await response.json();
+                currentHourlyData = data;
+
+                const currentHour = parseInt(document.getElementById('hourSlider').value);
+                const lineOptions = { plugins: { verticalLine: { draw: true, hour: currentHour } } };
+
+                initChart('h1', 'line', { labels: data.radiativeTimeLag.labels, datasets: createDatasets(data.radiativeTimeLag.datasets) }, lineOptions);
+                initChart('h4', 'line', { labels: data.windShearProfile.labels, datasets: createDatasets(data.windShearProfile.datasets) }, lineOptions);
+                initChart('h5', 'line', { labels: data.cloudCoverThickness.labels, datasets: createDatasets(data.cloudCoverThickness.datasets) }, lineOptions);
+                initChart('h9', 'line', { labels: data.moistureDynamics.labels, datasets: createDatasets(data.moistureDynamics.datasets) }, lineOptions);
+
+                updateHourlyUI(currentHour);
+            } catch (error) { console.error(error); }
+        }
+
+        function updateHourlyUI(hourIndex) {
+            if (!currentHourlyData || !currentHourlyData.hourlyLog) return;
+            const hInt = parseInt(hourIndex);
+            const ampm = hInt >= 12 ? 'PM' : 'AM';
+            let displayHr = hInt % 12; displayHr = displayHr === 0 ? 12 : displayHr;
+            document.getElementById('displayTime').innerText = displayHr + ':00 ' + ampm;
+            const currentHourData = currentHourlyData.hourlyLog[hInt];
+
+            if (currentHourData) {
+                document.getElementById('valTemp').innerText = currentHourData.temperature + " °C";
+                document.getElementById('valAppTemp').innerText = currentHourData.apparentTemperature + " °C";
+                document.getElementById('valCloud').innerText = currentHourData.cloudCover + " %";
+                document.getElementById('valWind').innerText = currentHourData.windSpeed100m + " km/h";
+                document.getElementById('valGusts').innerText = currentHourData.windGusts10m + " km/h";
+                document.getElementById('valHum').innerText = currentHourData.relativeHumidity + " %";
+                document.getElementById('valVpd').innerText = currentHourData.vapourPressureDeficit.toFixed(2) + " kPa";
+                document.getElementById('valDew').innerText = currentHourData.dewPoint + " °C";
+                document.getElementById('valPress').innerText = currentHourData.surfacePressure + " hPa";
+                document.getElementById('valEt0').innerText = currentHourData.et0Evapotranspiration.toFixed(2) + " mm";
+            }
+            ['h1', 'h4', 'h5', 'h9'].forEach(chartId => {
+                if (charts[chartId]) {
+                    charts[chartId].options.plugins.verticalLine.hour = hInt;
+                    charts[chartId].update('none');
+                }
+            });
+        }
+
+        document.getElementById('hourSlider').addEventListener('input', (e) => updateHourlyUI(e.target.value));
+        document.getElementById('datePicker').addEventListener('change', loadHourlyData);
+        window.onload = loadHourlyData;
+    </script>
+}

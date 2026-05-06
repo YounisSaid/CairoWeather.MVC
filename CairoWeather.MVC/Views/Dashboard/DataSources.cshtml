@@ -1,0 +1,173 @@
+﻿@{
+    ViewData["Title"] = "Data Source & Reliability";
+}
+
+<style>
+    .source-header {
+        background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+        border-radius: 16px;
+        padding: 40px 30px;
+        margin-bottom: 30px;
+        border: 1px solid #38bdf8;
+        box-shadow: 0 10px 40px rgba(56, 189, 248, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .source-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+    .info-card {
+        background: #1e293b;
+        border-radius: 16px;
+        border: 1px solid #334155;
+        height: 100%;
+        padding: 25px;
+        transition: transform 0.3s ease;
+    }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            border-color: #38bdf8;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .trust-badge {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .data-flow-box {
+        background: #0f172a;
+        border: 1px dashed #64748b;
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+    }
+
+    .flow-arrow {
+        color: #38bdf8;
+        font-size: 1.5rem;
+        margin: 0 15px;
+    }
+
+    .highlight-text {
+        color: #38bdf8;
+        font-weight: 700;
+    }
+</style>
+
+<div class="container-fluid pb-5">
+
+    <div class="source-header text-center text-white">
+        <div style="position: relative; z-index: 1;">
+            <span class="trust-badge mb-3 d-inline-block"><i class="fa-solid fa-check-circle me-2"></i>TRUSTED HISTORICAL DATA</span>
+            <h1 class="fw-bolder mb-3">Data Source & Reliability</h1>
+            <p class="text-light opacity-75 mx-auto" style="max-width: 800px; font-size: 1.15rem; line-height: 1.8;">
+                To make accurate solar energy calculations, we need accurate weather data. This system uses <span class="text-white fw-bold">10 years of historical weather data</span>, downloaded from <span class="text-white fw-bold">Open-Meteo</span> and saved locally in our database for fast and reliable analysis.
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+
+        <div class="col-lg-4">
+            <div class="info-card">
+                <div class="icon-wrapper" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">
+                    <i class="fa-solid fa-building-flag"></i>
+                </div>
+                <h4 class="text-white fw-bold mb-3">1. Official Weather Sources</h4>
+                <p class="text-light opacity-75" style="line-height: 1.7; font-size: 0.95rem;">
+                    Why do we trust <strong>Open-Meteo</strong>? Because it does not guess the weather. It collects its data directly from official government weather stations, like the National Weather Service in the USA and the DWD in Germany. This ensures our data is highly accurate.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="info-card">
+                <div class="icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <h4 class="text-white fw-bold mb-3">2. Fast & Local Database</h4>
+                <p class="text-light opacity-75" style="line-height: 1.7; font-size: 0.95rem;">
+                    We did not connect the app to an online API that takes time to load. Instead, we downloaded <strong>10 years of hourly data as CSV (Excel) files</strong> and imported them directly into our <strong>SQL Server Database</strong>. This makes the system incredibly fast, stable, and able to work offline.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="info-card">
+                <div class="icon-wrapper" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                    <i class="fa-solid fa-sun"></i>
+                </div>
+                <h4 class="text-white fw-bold mb-3">3. Solar-Specific Details</h4>
+                <p class="text-light opacity-75" style="line-height: 1.7; font-size: 0.95rem;">
+                    We downloaded more than just "temperature". We extracted the exact details needed for solar engineering: <span class="highlight-text">Shortwave Radiation (GHI)</span>, <span class="highlight-text">Cloud Cover</span>, <span class="highlight-text">Dew Point</span>, and <span class="highlight-text">Wind Speed</span>. This allows our C# code to calculate accurate energy output and heat loss.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="text-white fw-bold mb-4"><i class="fa-solid fa-network-wired me-2 text-primary"></i>How We Processed The Data</h4>
+    <div class="data-flow-box text-center">
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-center gap-3">
+
+            <div class="p-3 bg-dark border border-secondary rounded" style="width: 250px;">
+                <i class="fa-solid fa-file-csv text-primary fs-3 mb-2"></i>
+                <h6 class="text-white fw-bold mb-1">1. Download Data</h6>
+                <div class="small text-muted">10 Years of raw weather data downloaded from Open-Meteo.</div>
+            </div>
+
+            <i class="fa-solid fa-arrow-right-long flow-arrow d-none d-md-block"></i>
+            <i class="fa-solid fa-arrow-down-long flow-arrow d-md-none my-2"></i>
+
+            <div class="p-3 bg-dark border border-secondary rounded" style="width: 250px;">
+                <i class="fa-solid fa-server text-info fs-3 mb-2"></i>
+                <h6 class="text-white fw-bold mb-1">2. Database Seeder</h6>
+                <div class="small text-muted">A C# script cleans the CSV file and saves it into SQL Server.</div>
+            </div>
+
+            <i class="fa-solid fa-arrow-right-long flow-arrow d-none d-md-block"></i>
+            <i class="fa-solid fa-arrow-down-long flow-arrow d-md-none my-2"></i>
+
+            <div class="p-3 bg-dark border border-success rounded" style="width: 250px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);">
+                <i class="fa-brands fa-microsoft text-success fs-3 mb-2"></i>
+                <h6 class="text-white fw-bold mb-1">3. C# Math Engine</h6>
+                <div class="small text-muted">Analyzes the local data to show interactive dashboards.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="mt-5 text-center">
+        <p class="text-muted small">
+            <em>"All historical weather data utilized in this system is sourced from Open-Meteo."</em>
+        </p>
+    </div>
+
+</div>

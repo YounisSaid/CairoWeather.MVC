@@ -1,29 +1,563 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CairoWeather.MVC</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CairoWeather.MVC.styles.css" asp-append-version="true" />
-    <!-- Tab Favicon (Solar Panel matching the header icon) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%233b82f6' d='M316.4 33.3c-2.4-7.5-9.3-12.7-17.2-13.1s-15.5 3.8-19.1 11L255.8 80 208.6 80 184.3 31.3c-3.6-7.2-11.2-11.4-19.1-11s-14.8 5.6-17.2 13.1L114.7 139.7 54.4 124.6C44.7 122.2 34.6 128.5 32.2 138.2s3.9 19.8 13.6 22.2l56.8 14.2-21.7 65.1L24 225.4c-9.7-2.4-19.8 3.9-22.2 13.6s3.9 19.8 13.6 22.2l53.4 13.4L37.1 369.3c-3 9.1 1.9 18.9 11 21.9s18.9-1.9 21.9-11L101.7 285.1l52.5 13.1-31.7 95.1c-3 9.1 1.9 18.9 11 21.9s18.9-1.9 21.9-11l28.6-85.9 47.2 0 28.6 85.9c3 9.1 12.8 14 21.9 11s14-12.8 11-21.9l-31.7-95.1 52.5-13.1 31.7 95.1c3 9.1 12.8 14 21.9 11s14-12.8 11-21.9L350.6 274.6l53.4-13.4c9.7-2.4 15.6-12.5 13.2-22.2s-12.5-15.6-22.2-13.2l-56.8 14.2L316.4 175l56.8-14.2c9.7-2.4 15.6-12.5 13.2-22.2s-12.5-15.6-22.2-13.2l-54.4 13.6L276.5 33.3z'/%3E%3C/svg%3E">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary: #f59e0b;
+            --primary-light: #fef3c7;
+            --secondary: #3b82f6;
+            --ai-purple: #8b5cf6;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* --- TABS & CARDS --- */
+        .nav-pills .nav-link {
+            color: var(--text-muted);
+            border-radius: 0.5rem;
+            margin-right: 0.5rem;
+            font-weight: 600;
+            padding: 0.6rem 1.25rem;
+            transition: all 0.2s ease;
+            background-color: white;
+            border: 1px solid var(--border-color);
+        }
+
+            .nav-pills .nav-link:hover:not(.active) {
+                background-color: #f1f5f9;
+            }
+
+            .nav-pills .nav-link.active {
+                background-color: var(--primary);
+                color: white;
+                border-color: var(--primary);
+                box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.4);
+            }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            padding: 1rem 1.25rem;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        .time-control-card {
+            background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+            border-left: 4px solid var(--primary);
+        }
+
+        .form-range::-webkit-slider-thumb {
+            background: var(--primary);
+            width: 20px;
+            height: 20px;
+        }
+
+        .selected-time-display {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .bg-red-light {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+
+        .bg-blue-light {
+            background-color: #e0f2fe;
+            color: #0ea5e9;
+        }
+
+        .bg-green-light {
+            background-color: #d1fae5;
+            color: #10b981;
+        }
+
+        .bg-yellow-light {
+            background-color: #fef3c7;
+            color: #f59e0b;
+        }
+
+        .bg-indigo-light {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        .bg-slate-light {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
+
+        .analysis-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-left: 3px solid var(--primary);
+            padding-left: 0.75rem;
+            margin-top: 1rem;
+            line-height: 1.5;
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* --- AI FEATURE STYLES --- */
+        .btn-ai-magic {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s ease;
+        }
+
+            .btn-ai-magic:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+                color: white;
+            }
+
+        .ai-offcanvas {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(139, 92, 246, 0.2);
+            width: 500px !important;
+        }
+
+        .ai-report-content {
+            line-height: 1.8;
+            font-size: 0.95rem;
+            color: #1e293b;
+        }
+
+        .ai-typing-cursor {
+            border-right: 3px solid var(--ai-purple);
+            animation: blink 0.7s infinite;
+        }
+
+        .ai-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        #pdfExportArea {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        /* --- SOLAR MAIN TAB (الزرار الرئيسي للطاقة الشمسية) --- */
+        .nav-solar-main {
+            background-color: #1e293b !important;
+            color: #fbbf24 !important;
+            border: none !important;
+            font-weight: 800 !important;
+            transition: all 0.3s ease;
+        }
+
+            .nav-solar-main:hover:not(.active) {
+                background-color: #0f172a !important;
+                color: #fcd34d !important;
+            }
+
+            .nav-solar-main.active {
+                background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%) !important;
+                color: white !important;
+                box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4) !important;
+            }
+
+        /* --- SOLAR SUB-TABS (الزراير الفرعية للطاقة الشمسية) --- */
+        .nav-solar-sub .nav-link {
+            border: none !important;
+            border-radius: 10px !important;
+            background: transparent !important;
+            font-weight: 600;
+            color: var(--text-muted) !important;
+        }
+
+            .nav-solar-sub .nav-link.active {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+            }
+    </style>
 </head>
 <body>
+    <div class="container-fluid px-4 py-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <i class="fa-solid fa-sun text-warning fs-1"></i>
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">Cairo <span style="color: var(--primary);">Radiative Climate</span> Digital Twin</h2>
+                    <p class="text-muted mb-0">Solar, Thermodynamics, and Micro-climate Advanced Monitoring</p>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <div class="btn-group shadow-sm" role="group">
+                    <button type="button" class="btn btn-light border" onclick="exportRealData('csv')" title="Download CSV">
+                        <i class="fa-solid fa-file-csv text-success me-1"></i> CSV
+                    </button>
+                    <button type="button" class="btn btn-light border" onclick="exportRealData('xlsx')" title="Download Excel">
+                        <i class="fa-solid fa-file-excel text-success me-1"></i> Excel
+                    </button>
+                </div>
+
+                <button class="btn btn-ai-magic shadow-sm" onclick="triggerContextualAIReport()">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Generate AI Insights
+                </button>
+            </div>
+        </div>
+
+        @{
+            var actionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? "Hourly";
+            // Check if we are currently inside any of the Solar App tabs
+            bool isSolarApp = actionName.StartsWith("Solar");
+            bool isInteractive = actionName == "InteractiveSimulators";
+        }
+
+        <ul class="nav-pills nav mb-3 d-flex align-items-center">
+         <li class="nav-item">
+                <a class="nav-link @(actionName == "Hourly" ? "active" : "")" href="@Url.Action("Hourly", "Dashboard")">
+                    <i class="fa-solid fa-clock me-1"></i>Historical Hourly
+                </a>
+            </li>
+
+    <li class="nav-item">
+        <a class="nav-link @(actionName == "Tmy" ? "active" : "") text-success fw-bold" href="@Url.Action("Tmy", "Dashboard")" style="@(actionName != "Tmy" ? "background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2);" : "")">
+            <i class="fa-solid fa-calendar-check me-1"></i>TMY (2025 Baseline)
+        </a>
+    </li>
+
+    <li class="nav-item"><a class="nav-link @(actionName == "Monthly" ? "active" : "")" href="@Url.Action("Monthly", "Dashboard")"><i class="fa-solid fa-calendar-week me-1"></i>1-Month Analysis</a></li>
+    <li class="nav-item"><a class="nav-link @(actionName == "Yearly" ? "active" : "")" href="@Url.Action("Yearly", "Dashboard")"><i class="fa-solid fa-calendar-days me-1"></i>1-Year Seasonality</a></li>
+    <li class="nav-item"><a class="nav-link @(actionName == "Decadal" ? "active" : "")" href="@Url.Action("Decadal", "Dashboard")"><i class="fa-solid fa-earth-africa me-1"></i>10-Year Trends</a></li>
     
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+    <li class="nav-item ms-3">
+        <a class="nav-link @(actionName == "Formulas" ? "active" : "") text-primary fw-bold" href="@Url.Action("Formulas", "Dashboard")" style="@(actionName != "Formulas" ? "background-color: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);" : "")">
+            <i class="fa-solid fa-square-root-variable me-2"></i>
+            <span>Physics Formulas</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(actionName == "DataSources" ? "active" : "") text-info fw-bold" href="@Url.Action("DataSources", "Dashboard")" style="@(actionName != "DataSources" ? "background-color: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.2);" : "")">
+            <i class="fa-solid fa-shield-halved me-2"></i>
+            <span>Data Provenance</span>
+        </a>
+    </li>
+
+    <li class="nav-item ms-auto d-flex gap-2">
+        <a class="nav-link nav-interactive-main @(isInteractive ? "active" : "")" href="@Url.Action("InteractiveSimulators", "Dashboard")">
+            <i class="fa-solid fa-screwdriver-wrench me-2"></i>Interactive Simulators
+        </a>
+
+        <a class="nav-link nav-solar-main @(isSolarApp ? "active" : "")" href="@Url.Action("SolarSimulator", "Dashboard")">
+            <i class="fa-solid fa-solar-panel me-2"></i>Solar Applications Suite
+        </a>
+    </li>
+</ul>
+
+        @if (isSolarApp)
+        {
+            <div class="mb-4 p-2 rounded-4 shadow-sm" style="background-color: #e2e8f0; border: 1px solid #cbd5e1;">
+                <ul class="nav nav-pills nav-solar-sub border-0 m-0 d-flex justify-content-center flex-wrap gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link py-2 px-3 @(actionName == "SolarSimulator" ? "active" : "")" href="@Url.Action("SolarSimulator", "Dashboard")"><i class="fa-solid fa-temperature-half text-danger me-1"></i>Thermodynamics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-2 px-3 @(actionName == "SolarInverter" ? "active" : "")" href="@Url.Action("SolarInverter", "Dashboard")"><i class="fa-solid fa-plug-circle-bolt" style="color: #8b5cf6;"></i> Inverter</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-2 px-3 @(actionName == "SolarSoiling" ? "active" : "")" href="@Url.Action("SolarSoiling", "Dashboard")"><i class="fa-solid fa-smog text-secondary me-1"></i>Soiling</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-2 px-3 @(actionName == "SolarShading" ? "active" : "")" href="@Url.Action("SolarShading", "Dashboard")"><i class="fa-solid fa-cloud-moon text-dark me-1"></i>Bypass Diodes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-2 px-3 @(actionName == "SolarBifacial" ? "active" : "")" href="@Url.Action("SolarBifacial", "Dashboard")"><i class="fa-solid fa-layer-group text-info me-1"></i>Bifacial Albedo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-2 px-3 @(actionName == "SolarTracking" ? "active" : "")" href="@Url.Action("SolarTracking", "Dashboard")"><i class="fa-solid fa-satellite-dish text-success me-1"></i>Solar Tracking</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-2 px-3 @(actionName == "SolarPlanner" ? "active" : "")" href="@Url.Action("SolarPlanner", "Dashboard")"
+                           style="@(actionName == "SolarPlanner" ? "background: #f1f5f9; color: #1e293b; border-color: #cbd5e1;" : "background: #1e293b; color: #fbbf24;") border: none; font-weight: 800;">
+                            <i class="fa-solid fa-house-chimney-window me-1 text-info"></i>Rooftop Planner
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        }
+
+        <input type="hidden" id="currentTabContext" value="@actionName" />
+
+        @RenderBody()
+
     </div>
 
-   
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    <div class="offcanvas offcanvas-end ai-offcanvas" tabindex="-1" id="aiReportPanel" aria-labelledby="aiReportLabel">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold" id="aiReportLabel">
+                <i class="fa-solid fa-robot text-primary me-2"></i>Cairo-AI Climate Analyst
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div id="aiLoading" class="text-center py-5 d-none">
+                <div class="spinner-grow text-primary" role="status"></div>
+                <p class="mt-3 text-muted fw-bold">Analyzing contextual radiative data via Gemini...</p>
+            </div>
+
+            <div id="aiContent" class="d-none">
+                <span class="ai-badge mb-3 d-inline-block" id="aiBadgeText">Analysis Report</span>
+
+                <div id="pdfExportArea">
+                    <div id="aiTextBody" class="ai-report-content">
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 rounded-4 bg-light small text-muted border">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    <span id="aiDisclaimer">Real-time analysis derived from the database.</span>
+                </div>
+                <button class="btn btn-outline-primary btn-sm mt-3 w-100" onclick="exportAIToPDF()">
+                    <i class="fa-solid fa-file-pdf me-2"></i>Export as PDF Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // --- CHART.JS CONFIGURATION ---
+        Chart.defaults.font.family = "'Segoe UI', Roboto, sans-serif";
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.plugins.legend.position = 'bottom';
+
+        const verticalLinePlugin = {
+            id: 'verticalLine',
+            afterDatasetsDraw: function(chart, args, options) {
+                if (options && options.draw && options.hour !== undefined) {
+                    const ctx = chart.ctx;
+                    const topY = chart.chartArea.top;
+                    const bottomY = chart.chartArea.bottom;
+
+                    // THE FIX FOR MOBILE: Grab X coordinate from the actual data point instead of the axis tick
+                    const meta = chart.getDatasetMeta(0);
+                    if (!meta || !meta.data[options.hour]) return;
+                    const x = meta.data[options.hour].x;
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(x, topY + 22);
+                    ctx.lineTo(x, bottomY);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#ef4444';
+                    const text = options.hour + 'h';
+                    ctx.font = 'bold 12px "Segoe UI"';
+                    const textWidth = ctx.measureText(text).width;
+                    const boxWidth = textWidth + 16;
+                    const boxHeight = 22;
+
+                    let boxX = x - boxWidth / 2;
+                    boxX = Math.max(chart.chartArea.left, Math.min(boxX, chart.chartArea.right - boxWidth));
+
+                    ctx.fillRect(boxX, topY, boxWidth, boxHeight);
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(text, boxX + boxWidth / 2, topY + boxHeight / 2);
+                    ctx.restore();
+                }
+            }
+        };
+        Chart.register(verticalLinePlugin);
+
+        let charts = {};
+        function initChart(id, type, data, options) {
+            if (charts[id]) charts[id].destroy();
+            const ctx = document.getElementById(id);
+            if (!ctx) return;
+            const defaultColors = ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#64748b'];
+            if(data && data.datasets) {
+                data.datasets.forEach((ds, i) => {
+                    if (!ds.borderColor && !ds.backgroundColor) {
+                        ds.borderColor = defaultColors[i % defaultColors.length];
+                        ds.backgroundColor = defaultColors[i % defaultColors.length];
+                    }
+                });
+            }
+            charts[id] = new Chart(ctx, { type, data, options: { responsive: true, maintainAspectRatio: false, ...options } });
+        }
+        const createDatasets = (dict) => {
+            if(!dict) return []; return Object.keys(dict).map(key => ({ label: key, data: dict[key] }));
+        };
+
+        // --- REAL AI REPORT LOGIC ---
+         async function triggerContextualAIReport() {
+             const myOffcanvas = new bootstrap.Offcanvas(document.getElementById('aiReportPanel'));
+             myOffcanvas.show();
+
+             const loader = document.getElementById('aiLoading');
+             const content = document.getElementById('aiContent');
+             const textBody = document.getElementById('aiTextBody');
+             const activeTab = document.getElementById('currentTabContext').value;
+             let paramValue = "";
+
+             // التعديل هنا: ضفنا Tmy عشان يقرأ من الـ datePicker زي الـ Hourly بالظبط
+             if (activeTab === "Hourly" || activeTab === "Tmy") {
+                 paramValue = document.getElementById('datePicker') ? document.getElementById('datePicker').value : "";
+             }
+             else if (activeTab === "Monthly") { paramValue = document.getElementById('monthPicker') ? document.getElementById('monthPicker').value : ""; }
+             else if (activeTab === "Yearly") { paramValue = document.getElementById('yearPicker') ? document.getElementById('yearPicker').value : ""; }
+             else if (activeTab === "Decadal") { paramValue = "2015-2025"; }
+
+             loader.classList.remove('d-none');
+             content.classList.add('d-none');
+             textBody.innerHTML = "";
+
+             try {
+                 const response = await fetch(`/api/AiInsights/generate?timeframe=${activeTab}&param=${paramValue}`);
+                 if (!response.ok) throw new Error("Failed to generate AI report");
+                 const data = await response.json();
+
+                 loader.classList.add('d-none');
+                 content.classList.remove('d-none');
+                 typeWriter(data.reportHtml, "aiTextBody");
+             } catch (error) {
+                 console.error("AI Generation Error:", error);
+                 loader.classList.add('d-none');
+                 content.classList.remove('d-none');
+                 textBody.innerHTML = `<div class='alert alert-danger'><i class='fa-solid fa-triangle-exclamation me-2'></i><strong>Connection Error:</strong> ${error.message}</div>`;
+             }
+         }
+
+         function typeWriter(html, elementId) {
+             const element = document.getElementById(elementId);
+             let i = 0;
+             element.innerHTML = "";
+             const interval = setInterval(() => {
+                 element.innerHTML = html.substring(0, i) + "<span class='ai-typing-cursor'></span>";
+                 i += 5;
+                 if (i >= html.length) {
+                     clearInterval(interval);
+                     element.innerHTML = html;
+                 }
+                 const panel = document.querySelector('.ai-offcanvas .offcanvas-body');
+                 panel.scrollTop = panel.scrollHeight;
+             }, 20);
+         }
+
+         // --- RAW DATA EXPORT LOGIC (CSV/EXCEL) ---
+         function exportRealData(format) {
+             const activeTab = document.getElementById('currentTabContext').value;
+             let paramValue = "";
+
+             // التعديل هنا كمان للـ Export عشان الداتا تنزل صح
+             if (activeTab === "Hourly" || activeTab === "Tmy") {
+                 paramValue = document.getElementById('datePicker') ? document.getElementById('datePicker').value : "";
+             }
+             else if (activeTab === "Monthly") { paramValue = document.getElementById('monthPicker') ? document.getElementById('monthPicker').value : ""; }
+             else if (activeTab === "Yearly") { paramValue = document.getElementById('yearPicker') ? document.getElementById('yearPicker').value : ""; }
+             else if (activeTab === "Decadal") { paramValue = "2015-2025"; }
+
+             // Building the URL for DataExportController
+             const url = `/api/DataExport/download?format=${format}&timeframe=${activeTab}&param=${paramValue}`;
+             window.location.href = url;
+         }
+
+         // --- EXPORT TO PDF LOGIC (AI Report) ---
+         function exportAIToPDF() {
+             const element = document.getElementById('pdfExportArea');
+             const activeTab = document.getElementById('currentTabContext').value;
+             let filename = `Cairo_Climate_Report_${activeTab}.pdf`;
+             var opt = {
+                 margin: [0.5, 0.5, 0.5, 0.5],
+                 filename: filename,
+                 image: { type: 'jpeg', quality: 0.98 },
+                 html2canvas: { scale: 2 },
+                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+             };
+             html2pdf().set(opt).from(element).save();
+         }
+    </script>
+
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

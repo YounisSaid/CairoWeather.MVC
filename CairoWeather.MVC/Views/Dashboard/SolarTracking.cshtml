@@ -1,0 +1,280 @@
+﻿@{
+    ViewData["Title"] = "Single-Axis Tracking Simulator";
+}
+
+<style>
+    .simulator-card {
+        background: #0f172a;
+        border-radius: 20px;
+        border: 1px solid #1e3a8a;
+        overflow: hidden;
+    }
+
+    .visualizer-screen {
+        height: 350px;
+        background: #1e293b;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+    }
+
+    .sky-arc {
+        position: absolute;
+        top: 50px;
+        left: 10%;
+        right: 10%;
+        height: 200px;
+        border-top: 2px dashed #475569;
+        border-radius: 50% 50% 0 0;
+        z-index: 1;
+    }
+
+    .sun-orb {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: #fbbf24;
+        border-radius: 50%;
+        box-shadow: 0 0 30px #f59e0b;
+        margin-left: -20px;
+        margin-top: -20px;
+        z-index: 2;
+        transition: all 0.2s;
+    }
+
+    .panel-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 30px;
+        position: relative;
+        z-index: 3;
+    }
+
+    .panel-3d {
+        width: 120px;
+        height: 10px;
+        background: #1d4ed8;
+        border-top: 2px solid #cbd5e1;
+        transition: transform 0.2s;
+        transform-origin: center;
+    }
+
+    .panel-stand {
+        width: 10px;
+        height: 80px;
+        background: #64748b;
+    }
+
+    .metric-box {
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
+        height: 100%;
+    }
+
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        font-family: monospace;
+    }
+
+    .glow-engine {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px dashed #8b5cf6 !important;
+        box-shadow: inset 0 0 30px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.2) !important;
+    }
+
+    .clean-formula {
+        background: #0f172a;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.95rem;
+        color: #e2e8f0;
+        border: 1px solid #334155;
+        margin: 5px 0 10px 0;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="simulator-card shadow-lg h-100 d-flex flex-column">
+            <div class="visualizer-screen">
+                <div class="sky-arc"><div class="sun-orb" id="sun"></div></div>
+
+                <div class="panel-container border-end border-secondary">
+                    <span class="badge bg-secondary mb-5">Fixed Tilt (30&deg;)</span>
+                    <div class="panel-3d" id="fixedPanel" style="transform: rotate(30deg);"></div>
+                    <div class="panel-stand"></div>
+                </div>
+
+                <div class="panel-container">
+                    <span class="badge bg-success mb-5">Single-Axis Tracker</span>
+                    <div class="panel-3d" id="trackingPanel"></div>
+                    <div class="panel-stand"></div>
+                </div>
+            </div>
+            <div class="p-4 bg-dark">
+                <label class="text-white small mb-2 fw-bold d-flex justify-content-between">
+                    <span>Solar Time</span> <span id="timeDisplay" class="text-warning">12:00 PM</span>
+                </label>
+                <input type="range" class="form-range" min="6" max="18" step="0.5" value="12" id="timeSlider" oninput="runTracker()">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="row g-3 h-100">
+            <div class="col-6">
+                <div class="metric-box" style="border-left:4px solid #64748b;">
+                    <div class="metric-title">Fixed Output</div>
+                    <div class="metric-value text-light"><span id="valFixed">500</span> W</div>
+                </div>
+            </div>
+
+            <div class="col-6">
+                <div class="metric-box" style="border-left:4px solid #10b981;">
+                    <div class="metric-title">Tracked Output</div>
+                    <div class="metric-value text-success"><span id="valTracked">500</span> W</div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="metric-box" style="background: rgba(15, 23, 42, 0.9); border: 1px dashed #10b981;">
+                    <div class="metric-title text-success mb-2"><i class="fa-solid fa-satellite-dish me-2"></i>Live Tracking Variables</div>
+                    <div class="text-light small" style="font-family: monospace; line-height: 1.8;">
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-1">
+                            <span class="text-light fw-bold">Sun Angle (&theta;)</span>
+                            <span class="text-warning fw-bold" id="eqSunAngle">0&deg;</span>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm glow-engine">
+            <div class="card-body p-4 text-white">
+                <h4 class="fw-bold mb-4"><i class="fa-solid fa-arrows-spin text-primary me-2" style="color: #8b5cf6 !important;"></i>Understanding Single-Axis Tracking Dynamics</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Why Use Trackers? (The Cosine Effect)</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+                            <p class="text-light small mb-2" style="line-height: 1.8;">
+                                Solar panels operate at peak efficiency only when the sun's rays strike them at exactly <strong>90 degrees (perpendicular)</strong>. Any deviation creates a "Cosine Loss."
+                            </p>
+                            <ul class="text-white small fw-bold mb-1 mt-3" style="line-height: 2;">
+                                <li><i class="fa-solid fa-anchor text-secondary me-2"></i><strong>Fixed Tilt:</strong> Only perfectly aligned at Solar Noon. Loses massive potential in early morning and late afternoon.</li>
+                                <li><i class="fa-solid fa-rotate text-success me-2"></i><strong>Single-Axis Tracker:</strong> A motor continuously adjusts the panel tilt to "follow" the sun from East to West, eliminating the cosine loss and flattening the production curve.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Mechanical & Mathematical Logic</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+
+                            <h6 class="text-white small fw-bold mb-1">1. Normalization (Time Progress)</h6>
+                            <div class="clean-formula text-info">
+                                Progress = (Hour - 6) / 12
+                            </div>
+                            <p class="text-white small fw-bold mb-1" style="line-height: 1.6;">
+                                Converts the 12-hour daylight window (6 AM to 6 PM) into a normalized scale from <strong>0.0 to 1.0</strong>. This drives all subsequent trigonometric animations.
+                            </p>
+
+                            <h6 class="text-white small fw-bold mb-1">2. Atmospheric Factor (Air Mass Attenuation)</h6>
+                            <div class="clean-formula text-warning">
+                                Atmos_Loss = [sin(Progress &times; &pi;)]^1.5
+                            </div>
+                            <p class="text-white small fw-bold mb-1" style="line-height: 1.6;">
+                                Simulates dawn/dusk weakness. The power of 1.5 ensures a steeper drop-off, accurately modeling how the atmosphere scatters more light when the sun is near the horizon.
+                            </p>
+
+                            <h6 class="text-white small fw-bold mb-1">3. Fixed Array Output (Cosine Penalty)</h6>
+                            <div class="clean-formula text-light">
+                                P_fixed = P_max (500W) &times; cos(| &theta;_sun |) &times; Atmos_Loss
+                            </div>
+
+                            <h6 class="text-white small fw-bold mb-1 mt-3">4. Tracking Array Output (Always Perpendicular)</h6>
+                            <div class="clean-formula text-success mb-0" style="line-height: 1.8;">
+                                P_tracked = P_max (500W) &times; cos(0&deg;) &times; Atmos_Loss<br>
+                                <span class="text-muted">// Since cos(0&deg;) = 1, it captures 100% of available light.</span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function runTracker() {
+            const hour = parseFloat(document.getElementById('timeSlider').value);
+            let displayHr = Math.floor(hour) > 12 ? Math.floor(hour) - 12 : Math.floor(hour);
+            if(displayHr === 0) displayHr = 12;
+            let mins = (hour % 1) === 0 ? "00" : "30";
+            document.getElementById('timeDisplay').innerText = `${displayHr}:${mins} ${hour >= 12 ? 'PM' : 'AM'}`;
+
+            // Progress from 0 (6 AM) to 1 (6 PM)
+            const progress = (hour - 6) / 12;
+
+            // Sun Visual Position on the Arc
+            const sunX = progress * 100; // %
+            const sunY = Math.sin(progress * Math.PI) * 100; // % (0 at ends, 100 at noon)
+            const sun = document.getElementById('sun');
+            sun.style.left = `${sunX}%`;
+            sun.style.top = `${100 - sunY}%`;
+
+            // Physics: Sun Angle from -90 (East) to +90 (West). 0 is Solar Noon.
+            const sunAngle = (progress - 0.5) * 180;
+            document.getElementById('eqSunAngle').innerText = sunAngle.toFixed(0) + '°';
+
+            // Tracker Panel follows the sun angle visually
+            // Limit tracking angle to +/- 60 degrees (realistic mechanical limit)
+            let trackerAngle = Math.max(-60, Math.min(60, sunAngle));
+            document.getElementById('trackingPanel').style.transform = `rotate(${trackerAngle}deg)`;
+
+            const maxPower = 500;
+
+            // Physics 1: Cosine Factor (Geometric Loss)
+            let fixedAngleDiff = Math.abs(sunAngle - 0);
+            let cosFactor = Math.max(0, Math.cos(fixedAngleDiff * (Math.PI/180)));
+
+            // Physics 2: Atmosphere Factor (Air Mass Attenuation)
+            // Using exponent 1.5 to separate it visually and mathematically from the Cosine curve
+            let atmosphereThicknessLoss = Math.pow(Math.sin(progress * Math.PI), 1.5);
+
+            // Power Math
+            let fixedPower = maxPower * cosFactor * atmosphereThicknessLoss;
+            let trackedPower = maxPower * 1 * atmosphereThicknessLoss; // Tracker Cosine is always 1
+
+            // Update UI Metrics
+            document.getElementById('valFixed').innerText = fixedPower.toFixed(0);
+            document.getElementById('valTracked').innerText = trackedPower.toFixed(0);
+            document.getElementById('valCosLoss').innerText = cosFactor.toFixed(2);
+            document.getElementById('valAtmos').innerText = atmosphereThicknessLoss.toFixed(2);
+        }
+
+        window.onload = runTracker;
+    </script>
+}

@@ -1,10 +1,11 @@
 using CairoWeather.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoWeather.Web.Controllers
+namespace CairoWeather.MVC.Controllers
 {
     public class DashboardController : Controller
     {
+
         private readonly IWeatherAnalyticsService _analyticsService;
 
         public DashboardController(IWeatherAnalyticsService analyticsService)
@@ -12,43 +13,84 @@ namespace CairoWeather.Web.Controllers
             _analyticsService = analyticsService;
         }
 
-        // Renders the main Dashboard View (Index.cshtml)
-        public IActionResult Index()
+
+        // GET: /Dashboard/Hourly
+        public IActionResult Hourly()
+        {
+            return View();
+        }
+        [HttpGet]
+        public IActionResult Tmy()
+        {
+            return View();
+        }
+        // GET: /Dashboard/Monthly
+        public IActionResult Monthly()
         {
             return View();
         }
 
-        // Endpoint for Section 1: Hourly Data
-        [HttpGet]
-        public async Task<JsonResult> GetHourlyData(string date)
+        // GET: /Dashboard/Yearly
+        public IActionResult Yearly()
         {
-            // Default fallback to ensure the charts load if the date is empty or invalid
-            if (!DateTime.TryParse(date, out DateTime parsedDate))
+            return View();
+        }
+
+        // GET: /Dashboard/Decadal
+        public IActionResult Decadal()
+        {
+            return View();
+        }
+
+        // GET: /Dashboard/Solar
+        public IActionResult SolarSimulator() { return View(); }
+        public IActionResult SolarInverter() { return View(); }
+        public IActionResult SolarSoiling() { return View(); }
+        public IActionResult SolarShading() { return View(); }
+        public IActionResult SolarBifacial() { return View(); }
+        public IActionResult SolarTracking() { return View(); }
+        public IActionResult SolarPlanner() { return View(); }
+
+        public IActionResult InteractiveSimulators()
+        {
+            return View();
+        }
+        public IActionResult Formulas()
+        {
+            return View();
+        }
+        public IActionResult DataSources()
+        {
+            return View();
+        }
+        [HttpGet]
+        [Route("api/Dashboard/InteractiveSimulators")]
+        public async Task<IActionResult> CompareDays(DateTime date1, DateTime date2)
+        {
+            try
             {
-                parsedDate = new DateTime(2020, 3, 13);
+                // نكلم الـ Service ترجع الداتا
+                var chartData = await _analyticsService.GetYieldComparisonAsync(date1, date2);
+
+                // نرجعها بصيغة JSON زي ما الـ JavaScript متوقع
+                return Json(new
+                {
+                    labels = chartData.Labels,
+                    day1 = chartData.Datasets["day1"],
+                    day2 = chartData.Datasets["day2"]
+                });
             }
-
-            var result = await _analyticsService.GetHourlyAnalyticsAsync(parsedDate);
-            return Json(result);
-        }
-
-        // Endpoint for Section 2: Yearly Data
-        [HttpGet]
-        public async Task<JsonResult> GetYearlyData(int year)
-        {
-            // If year is invalid (e.g., 0), default to 2020
-            if (year <= 0) year = 2020;
-
-            var result = await _analyticsService.GetYearlyAnalyticsAsync(year);
-            return Json(result);
-        }
-
-        // Endpoint for Section 3: Decade Data
-        [HttpGet]
-        public async Task<JsonResult> GetDecadeData()
-        {
-            var result = await _analyticsService.GetDecadeAnalyticsAsync();
-            return Json(result);
+            catch (Exception ex)
+            {
+                // Fallback in case of error
+                return Json(new
+                {
+                    labels = new List<string> { "6:00", "8:00", "10:00", "12:00", "14:00", "16:00", "18:00" },
+                    day1 = new List<double> { 0, 1.5, 3.8, 5.2, 4.9, 2.5, 0 },
+                    day2 = new List<double> { 0, 0.9, 2.1, 3.1, 2.8, 1.2, 0 },
+                    error = ex.Message
+                });
+            }
         }
     }
 }

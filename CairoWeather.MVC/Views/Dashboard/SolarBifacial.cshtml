@@ -1,0 +1,159 @@
+﻿@{
+    ViewData["Title"] = "Bifacial Albedo Effect";
+}
+<style>
+    .simulator-card {
+        background: #0f172a;
+        border-radius: 20px;
+        border: 1px solid #1e3a8a;
+        overflow: hidden;
+    }
+
+    .visualizer-screen {
+        height: 350px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 1s ease;
+    }
+
+    /* Surfaces */
+    .surf-asphalt {
+        background: linear-gradient(to bottom, #1e293b 40%, #0f172a);
+    }
+
+    .surf-sand {
+        background: linear-gradient(to bottom, #1e293b 40%, #a16207);
+    }
+
+    .surf-white {
+        background: linear-gradient(to bottom, #1e293b 40%, #f8fafc);
+    }
+
+    .bifacial-panel {
+        width: 200px;
+        height: 120px;
+        background: rgba(30, 64, 175, 0.8);
+        border: 4px solid #cbd5e1;
+        transform: rotateX(60deg);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        position: relative;
+        backdrop-filter: blur(5px);
+        z-index: 2;
+    }
+
+    .reflection-rays {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        opacity: 0;
+        transition: opacity 0.5s;
+        z-index: 1;
+    }
+
+    .ray {
+        width: 4px;
+        height: 150px;
+        background: linear-gradient(to top, transparent, #fbbf24);
+        animation: shootUp 1s infinite linear;
+    }
+   
+
+    .metric-box {
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
+        height: 100%;
+    }
+
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        font-family: monospace;
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="simulator-card shadow-lg h-100 d-flex flex-column">
+            <div class="visualizer-screen surf-asphalt" id="scene">
+                <div class="bifacial-panel"></div>
+                <div class="reflection-rays" id="rays"><div class="ray"></div><div class="ray" style="animation-delay:0.3s"></div><div class="ray" style="animation-delay:0.6s"></div></div>
+            </div>
+            <div class="p-3 bg-dark">
+                <label class="text-white small mb-2 fw-bold">Select Ground Surface (Albedo Source):</label>
+                <div class="btn-group w-100">
+                    <button class="btn btn-outline-secondary active" onclick="setAlbedo('asphalt', 0.15)">Asphalt (15%)</button>
+                    <button class="btn btn-outline-warning" onclick="setAlbedo('sand', 0.35)">Desert Sand (35%)</button>
+                    <button class="btn btn-outline-light" onclick="setAlbedo('white', 0.80)">White Roof (80%)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="row g-3 h-100">
+            <div class="col-6"><div class="metric-box" style="border-left:4px solid #3b82f6;"><div class="metric-title">Front Output</div><div class="metric-value text-primary">400 W</div></div></div>
+            <div class="col-6"><div class="metric-box" style="border-left:4px solid #f59e0b;"><div class="metric-title">Rear Output</div><div class="metric-value text-warning">+<span id="valRear">42</span> W</div></div></div>
+            <div class="col-12"><div class="metric-box" style="border-left:4px solid #10b981;"><div class="metric-title">Total Yield</div><div class="metric-value text-success"><span id="valTotal">442</span> W</div></div></div>
+            <div class="col-12">
+                <div class="metric-box" style="background: rgba(15, 23, 42, 0.9); border: 1px dashed #8b5cf6;">
+                    <div class="metric-title text-info mb-2"><i class="fa-solid fa-microchip me-2"></i>Bifacial Math Engine</div>
+                    <div class="text-light small" style="font-family: monospace; line-height: 1.8;">
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-1">
+                            <span class="text-light fw-bold">Albedo Coefficient</span>
+                            <span class="text-warning fw-bold" id="eqAlbedo">0.15</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-1">
+                            <span class="text-light fw-bold">Bifaciality Factor</span>
+                            <span class="text-light fw-bold">0.70 (Standard)</span>
+                        </div>
+                        <div class="d-flex justify-content-between pt-1">
+                            <span class="text-light fw-bold">Rear Yield Equation</span>
+                            <span class="text-info fw-bold">Front &times; Albedo &times; 0.70</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setAlbedo(type, val) {
+            // Update Buttons
+            document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update Scene Background
+            const scene = document.getElementById('scene');
+            scene.className = `visualizer-screen surf-${type}`;
+
+            // Update Rays Opacity based on reflection
+            document.getElementById('rays').style.opacity = (val * 1.2);
+
+            // Math
+            const frontPower = 400;
+            const bifacialFactor = 0.7;
+            const rearPower = frontPower * val * bifacialFactor;
+            const total = frontPower + rearPower;
+
+            // UI Update
+            document.getElementById('valRear').innerText = rearPower.toFixed(0);
+            document.getElementById('valTotal').innerText = total.toFixed(0);
+            document.getElementById('eqAlbedo').innerText = val.toFixed(2);
+        }
+    </script>
+}

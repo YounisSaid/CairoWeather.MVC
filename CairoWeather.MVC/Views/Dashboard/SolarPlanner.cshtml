@@ -1,0 +1,518 @@
+﻿@{
+    ViewData["Title"] = "Household Rooftop Planner";
+}
+
+<style>
+    :root {
+        --mono-blue: #1e3a8a; /* كحلي غامق للألواح المونو */
+        --poly-blue: #0284c7; /* أزرق فاتح للألواح البولي */
+    }
+
+    .planner-card {
+        background: #1e293b;
+        border-radius: 20px;
+        border: 1px solid #475569;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    /* --- 3D ROOFTOP SCENE --- */
+    .roof-scene {
+        height: 450px;
+        background: radial-gradient(circle at top, #38bdf8, #a16207 80%, #0f172a);
+        position: relative;
+        overflow: hidden;
+        perspective: 1000px;
+        border-bottom: 3px solid #64748b;
+    }
+
+    .house-roof {
+        width: 100%;
+        height: 350px;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23444"/><path d="M0 0 L20 20 M20 0 L0 20" stroke="%23666" stroke-width="0.5"/></svg>');
+        background-color: #475569;
+        transform: rotateX(50deg) translateY(100px);
+        transform-origin: center bottom;
+        box-shadow: -10px 20px 50px rgba(0,0,0,0.8);
+        border: 4px solid #f8fafc;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        gap: 4px;
+        padding: 15px;
+    }
+
+    .roof-slot {
+        background: rgba(0,0,0,0.3);
+        border-radius: 2px;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px dashed rgba(255,255,255,0.1);
+    }
+
+        .roof-slot:hover {
+            background: rgba(56, 189, 248, 0.4);
+            border-color: rgba(56, 189, 248, 0.8);
+        }
+
+    /* Solar Panel Texture & Look */
+    .solar-texture {
+        background-image: linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px) !important;
+        background-size: 10px 10px !important;
+        border: 1px solid #cbd5e1;
+        box-shadow: inset 0 0 10px rgba(255,255,255,0.2), 0 5px 15px rgba(0,0,0,0.8);
+    }
+
+    .on-roof-panel {
+        width: 95%;
+        height: 95%;
+        border-radius: 2px;
+        /* Custom properties will be set via JS, but we add the texture class */
+        pointer-events: none; /* يمنع اللوح إنه يقطع حدث الـ DragOver للشبكة */
+    }
+
+    /* --- PANEL STORE --- */
+    .store-container {
+        padding: 15px;
+        background: #0f172a;
+        border-top: 1px solid #334155;
+    }
+
+    .store-item {
+        cursor: grab;
+        transition: transform 0.2s, box-shadow 0.2s;
+        width: 100%;
+        background: #1e293b;
+    }
+
+        .store-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
+        }
+
+    .dragging {
+        cursor: grabbing;
+        opacity: 0.5;
+    }
+
+    .mini-panel {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 10px auto;
+        border-radius: 4px;
+    }
+
+    /* --- METRICS DASHBOARD & GAUGES --- */
+    .goal-gauge {
+        width: 100%;
+        height: 350px;
+        background: #0f172a;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .gauge-fill {
+        width: 100%;
+        background: linear-gradient(180deg, #10b981, #d9f99d);
+        height: 0%;
+        transition: height 0.5s ease;
+        position: relative;
+    }
+
+    .gauge-water-top {
+        position: absolute;
+        top: -10px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: #10b981;
+        border-radius: 50% 50% 0 0;
+    }
+
+    /* --- THE FIX: Dark Glass Label --- */
+    .gauge-label {
+        position: absolute;
+        z-index: 5;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(15, 23, 42, 0.85); /* خلفية زجاجية غامقة */
+        backdrop-filter: blur(5px);
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.1);
+        width: 85%;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .metric-value-huge {
+        font-size: 3.5rem;
+        font-weight: 900;
+        line-height: 1;
+        text-shadow: 0 0 20px currentColor;
+    }
+
+    .metric-box {
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
+    }
+
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        font-family: monospace;
+    }
+
+    /* Engine Explanation Styles */
+    .glow-engine {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px dashed #8b5cf6 !important;
+        box-shadow: inset 0 0 30px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.2) !important;
+    }
+
+    .clean-formula {
+        background: #0f172a;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.95rem;
+        color: #e2e8f0;
+        border: 1px solid #334155;
+        margin: 5px 0 10px 0;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="planner-card shadow-lg h-100 d-flex flex-column">
+            <div class="roof-scene flex-grow-1">
+                <div class="text-white text-center position-absolute top-0 w-100 pt-3 z-index-10"><i class="fa-solid fa-hand-pointer me-2 text-info"></i>Drag and hover over slots to paint panels</div>
+                <div class="house-roof" id="roofGrid">
+                    @for (int i = 1; i <= 60; i++)
+                    {
+                        <div class="roof-slot" data-slot-id="@i" ondrop="dropPanel(event)" ondragover="allowDrop(event)"></div>
+                    }
+                </div>
+            </div>
+
+            <div class="store-container">
+                <h6 class="text-info fw-bold mb-3"><i class="fa-solid fa-store me-2"></i>Select Panel Type (Drag to Roof)</h6>
+                <div class="row g-3">
+                    <div class="col-4">
+                        <div class="p-3 border border-secondary rounded store-item text-center" draggable="true" ondragstart="dragPanel(event)" id="panelMono" data-power="450" data-color="--mono-blue">
+                            <div class="mini-panel solar-texture" style="background-color: var(--mono-blue);"></div>
+                            <div class="small fw-bold text-light">Mono 450W</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 border border-secondary rounded store-item text-center" draggable="true" ondragstart="dragPanel(event)" id="panelPoly" data-power="350" data-color="--poly-blue">
+                            <div class="mini-panel solar-texture" style="background-color: var(--poly-blue);"></div>
+                            <div class="small fw-bold text-light">Poly 350W</div>
+                        </div>
+                    </div>
+                    <div class="col-4 d-flex align-items-center">
+                        <button class="btn btn-outline-danger w-100 py-3 fw-bold" onclick="clearRoof()"><i class="fa-solid fa-trash-can me-2"></i>Clear Roof</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="row g-3 h-100 flex-column">
+            <div class="col-12">
+                <div class="metric-box bg-dark" style="border-left: 4px solid #fbbf24;">
+                    <label class="metric-title text-warning mb-2 fw-bold d-flex justify-content-between">
+                        <span>Monthly Electricity Bill</span>
+                        <span class="text-warning"><span id="valBill">1500</span> EGP</span>
+                    </label>
+                    <input type="range" class="form-range" min="0" max="5000" step="100" value="1500" id="billSlider" oninput="runPlannerEngine()">
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="goal-gauge">
+                    <div class="gauge-label">
+                        <div class="text-light fw-bold text-uppercase mb-2" style="letter-spacing: 2px;">Target Met</div>
+                        <div class="metric-value-huge text-danger" id="valPercent">0%</div>
+
+                        <div class="d-flex justify-content-between mt-4 border-top border-secondary pt-2">
+                            <div class="text-start">
+                                <div class="text-light fw-bold">NEEDS</div>
+                                <div class="text-light fw-bold"><span id="valNeedKwh">0</span> <span class="small">kWh/d</span></div>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-light fw-bold">ACTIVE</div>
+                                <div class="text-light fw-bold"><span id="valActualKwh">0</span> <span class="small">kWh/d</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gauge-fill" id="gaugeFill">
+                        <div class="gauge-water-top"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-auto">
+                <div class="metric-box" style="border: 2px solid #10b981; background: rgba(16, 185, 129, 0.05);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-title text-success">Total Panels Placed</div>
+                            <div class="text-muted small">System size: <span id="valSystemSize">0</span> kWp</div>
+                        </div>
+                        <div class="metric-value text-success"><span id="valTotalPanels">0</span> <span style="font-size:1rem;">Units</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm glow-engine">
+            <div class="card-body p-4 text-white">
+                <h4 class="fw-bold mb-4"><i class="fa-solid fa-calculator text-primary me-2" style="color: #8b5cf6 !important;"></i>Rooftop Sizing & Financial Math</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Sizing Constants (Cairo Setup)</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+                            <ul class="list-unstyled mb-0 small text-white" style="line-height: 2.2;">
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Electricity Tariff:</span>
+                                    <span class="text-warning fw-bold">1.5 EGP / kWh</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Peak Sun Hours (PSH):</span>
+                                    <span class="text-info fw-bold">5.3 hrs / day</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>System Derating Factor:</span>
+                                    <span class="text-danger fw-bold">0.80 (20% System Loss)</span>
+                                </li>
+                                <li class="d-flex justify-content-between pt-1">
+                                    <span>Panel Options:</span>
+                                    <span class="text-success fw-bold">Mono 450W / Poly 350W</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Simulation Logic</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+
+                            <h6 class="text-white small fw-bold mb-1">1. Daily Consumption Target</h6>
+                            <div class="clean-formula text-warning">
+                                Target_kWh_Day = (Monthly_Bill_EGP / 1.5) / 30
+                            </div>
+
+                            <h6 class="text-white small fw-bold mb-1 mt-3">2. Single Panel Daily Yield</h6>
+                            <div class="clean-formula text-light">
+                                Panel_kWh = (Panel_Power_W / 1000) &times; 5.3_h &times; 0.80
+                            </div>
+
+                            <h6 class="text-white small fw-bold mb-1 mt-3">3. Goal Achievement (Water Gauge)</h6>
+                            <div class="clean-formula text-success mb-0" style="line-height: 1.8;">
+                                Total_Generation = SUM(All_Placed_Panels_kWh)<br>
+                                Target_Met_% = (Total_Generation / Target_kWh_Day) &times; 100
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const egpToKwhTariff = 1.5;
+        const peakSunHours = 5.3;
+        const deratingFactor = 0.8;
+
+        let placedPanelsData = {};
+        let draggedPanelData = null;
+        let waveAnimation;
+
+        function initAnimations() {
+            const gaugeTop = document.querySelector('.gauge-water-top');
+            waveAnimation = gaugeTop.animate([
+                { opacity: 0.8, transform: 'scaleY(1)' },
+                { opacity: 1, transform: 'scaleY(1.3)' }
+            ], {
+                duration: 800,
+                iterations: Infinity,
+                direction: 'alternate',
+                easing: 'ease-in-out'
+            });
+        }
+
+        // --- Continuous Drag & Paint Logic ---
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            const slot = ev.target.closest('.roof-slot');
+            if (!slot) return;
+
+            // Highlight hover effect
+            slot.style.background = 'rgba(56, 189, 248, 0.6)';
+
+            // If we are dragging something and the slot is empty, paint it immediately!
+            if (!placedPanelsData[slot.dataset.slotId] && draggedPanelData) {
+                placePanelInSlot(slot, draggedPanelData);
+            }
+        }
+
+        function dragPanel(ev) {
+            const item = ev.target.closest('.store-item');
+            draggedPanelData = {
+                id: item.id,
+                power: parseFloat(item.dataset.power),
+                color: item.dataset.color
+            };
+            item.classList.add('dragging');
+        }
+
+        document.addEventListener("dragend", function(event) {
+            const item = event.target.closest('.store-item');
+            if(item) item.classList.remove('dragging');
+            draggedPanelData = null; // Reset
+        });
+
+        // We keep dropPanel but it does nothing to avoid errors, painting is done in allowDrop
+        function dropPanel(ev) {
+            ev.preventDefault();
+        }
+
+        // Reusable painting function
+        function placePanelInSlot(slot, data) {
+            slot.style.background = 'rgba(0,0,0,0.3)'; // reset hover
+
+            const onRoofPanel = document.createElement('div');
+            onRoofPanel.className = 'on-roof-panel solar-texture';
+            onRoofPanel.style.backgroundColor = `var(${data.color})`;
+
+            slot.appendChild(onRoofPanel);
+
+            onRoofPanel.animate([
+                { transform: 'translateZ(300px)', opacity: 0 },
+                { transform: 'translateZ(10px)', opacity: 1 }
+            ], {
+                duration: 300,
+                easing: 'ease-out',
+                fill: 'forwards'
+            });
+
+            placedPanelsData[slot.dataset.slotId] = data;
+            runPlannerEngine();
+        }
+
+        function clearRoof() {
+            const slots = document.querySelectorAll('.roof-slot');
+            slots.forEach(slot => {
+                if(slot.lastChild) {
+                    let panel = slot.lastChild;
+                    let removeAnim = panel.animate([
+                        { transform: 'scale(1) translateZ(10px)', opacity: 1 },
+                        { transform: 'scale(0) translateZ(10px)', opacity: 0 }
+                    ], { duration: 200, easing: 'ease-in' });
+
+                    removeAnim.onfinish = () => slot.removeChild(panel);
+                }
+            });
+            placedPanelsData = {};
+            setTimeout(runPlannerEngine, 200);
+        }
+
+        function runPlannerEngine() {
+            const billEgp = parseFloat(document.getElementById('billSlider').value);
+            document.getElementById('valBill').innerText = billEgp;
+
+            let monthlyKwhNeed = billEgp / egpToKwhTariff;
+            let dailyKwhNeedTarget = monthlyKwhNeed / 30;
+            document.getElementById('valNeedKwh').innerText = dailyKwhNeedTarget.toFixed(1);
+
+            let totalPanelsPlaced = 0;
+            let totalWp = 0;
+            let dailyActualKwh = 0;
+
+            for (const slotId in placedPanelsData) {
+                totalPanelsPlaced++;
+                const panel = placedPanelsData[slotId];
+                totalWp += panel.power;
+
+                let panelKwhDay = (panel.power / 1000) * peakSunHours * deratingFactor;
+                dailyActualKwh += panelKwhDay;
+            }
+
+            let systemSizeKwp = totalWp / 1000;
+
+            document.getElementById('valTotalPanels').innerText = totalPanelsPlaced;
+            document.getElementById('valSystemSize').innerText = systemSizeKwp.toFixed(1);
+            document.getElementById('valActualKwh').innerText = dailyActualKwh.toFixed(1);
+
+            const fill = document.getElementById('gaugeFill');
+            const percentVal = document.getElementById('valPercent');
+
+            let percentMet = 0;
+            if(dailyKwhNeedTarget > 0) {
+                percentMet = (dailyActualKwh / dailyKwhNeedTarget) * 100;
+            } else if(dailyActualKwh > 0 && billEgp === 0) {
+                percentMet = 100;
+            }
+
+            percentVal.innerText = percentMet.toFixed(0) + '%';
+
+            let capPercentMet = Math.min(100, percentMet);
+            fill.style.height = capPercentMet + '%';
+
+            if (waveAnimation) {
+                waveAnimation.playbackRate = 0.5 + (capPercentMet / 100);
+            }
+
+            const gaugeTop = fill.querySelector('.gauge-water-top');
+
+            // Color Feedback Logic
+            if(percentMet >= 100) {
+                fill.style.background = 'linear-gradient(180deg, #10b981, #064e3b)';
+                gaugeTop.style.background = '#10b981';
+                percentVal.className = 'metric-value-huge text-success';
+            } else if(percentMet >= 60) {
+                fill.style.background = 'linear-gradient(180deg, #f59e0b, #78350f)';
+                gaugeTop.style.background = '#f59e0b';
+                percentVal.className = 'metric-value-huge text-warning';
+            } else {
+                fill.style.background = 'linear-gradient(180deg, #ef4444, #7f1d1d)';
+                gaugeTop.style.background = '#ef4444';
+                percentVal.className = 'metric-value-huge text-danger';
+            }
+        }
+
+        window.onload = function() {
+            initAnimations();
+            runPlannerEngine();
+        };
+    </script>
+}

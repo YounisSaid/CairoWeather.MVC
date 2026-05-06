@@ -1,0 +1,390 @@
+﻿@{
+    ViewData["Title"] = "Dust & Soiling Impact Simulator";
+}
+
+<style>
+    .simulator-card {
+        background: #0f172a;
+        border-radius: 20px;
+        border: 1px solid #1e3a8a;
+        box-shadow: 0 0 40px rgba(30, 58, 138, 0.2);
+        overflow: hidden;
+    }
+
+    .visualizer-screen {
+        height: 350px;
+        background: radial-gradient(circle at top, #334155, #0f172a);
+        position: relative;
+        overflow: hidden;
+        border-bottom: 2px solid #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* --- 3D PANEL & DUST SYSTEM --- */
+    .pv-scene {
+        position: relative;
+        perspective: 1000px;
+        transform-style: preserve-3d;
+    }
+
+    .pv-panel-base {
+        width: 300px;
+        height: 180px;
+        background: repeating-linear-gradient(90deg, #1e40af, #1e40af 24px, #1d4ed8 25px);
+        border: 6px solid #cbd5e1;
+        border-radius: 8px;
+        transform: rotateX(50deg) rotateZ(-10deg);
+        box-shadow: -20px 30px 40px rgba(0,0,0,0.7);
+        position: relative;
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+
+    /* Dust Layer overlays the panel */
+    .dust-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /* لون ترابي صحراوي */
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.5"/></svg>'), #d6d3d1;
+        mix-blend-mode: normal;
+        opacity: 0; /* Starts clean */
+        transition: opacity 0.2s ease;
+        z-index: 2;
+    }
+
+    /* Cleaning Water/Wiper Animation Element */
+    .water-sweep {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -100%;
+        width: 150px;
+        background: linear-gradient(to right, transparent, rgba(56, 189, 248, 0.8), rgba(224, 242, 254, 0.9), transparent);
+        transform: skewX(-20deg);
+        z-index: 3;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    }
+
+    /* --- METRICS DASHBOARD --- */
+    .metric-box {
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        font-family: monospace;
+    }
+
+    .glow-green {
+        border-left: 4px solid #10b981;
+        box-shadow: -10px 0 25px -10px rgba(16, 185, 129, 0.8);
+    }
+
+    .glow-yellow {
+        border-left: 4px solid #f59e0b;
+        box-shadow: -10px 0 25px -10px rgba(245, 158, 11, 0.8);
+    }
+
+    .glow-red {
+        border-left: 4px solid #ef4444;
+        box-shadow: -10px 0 25px -10px rgba(239, 68, 68, 0.8);
+    }
+
+    .glow-engine {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px dashed #8b5cf6 !important;
+        box-shadow: inset 0 0 30px rgba(139, 92, 246, 0.15), 0 0 20px rgba(139, 92, 246, 0.2) !important;
+    }
+
+    /* ستايل المعادلات النظيف */
+    .clean-formula {
+        background: #0f172a;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.95rem;
+        color: #e2e8f0;
+        border: 1px solid #334155;
+        margin: 5px 0 10px 0;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .slider-container {
+        padding: 20px;
+        background: #1e293b;
+    }
+
+    /* Customizing the Dust Slider to look earthy */
+    .dust-slider::-webkit-slider-thumb {
+        background: #d6d3d1;
+        border: 2px solid #78716c;
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="simulator-card shadow-lg h-100 d-flex flex-column">
+            <div class="visualizer-screen flex-grow-1">
+                <div class="pv-scene">
+                    <div class="pv-panel-base" id="panelBase">
+                        <div class="dust-layer" id="dustOverlay"></div>
+                        <div class="water-sweep" id="waterWiper"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slider-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-light fw-bold fs-5">Days Without Cleaning: <span id="daysDisplay" class="text-warning">0</span> Days</span>
+                    <button class="btn btn-info fw-bold shadow" id="btnWash" onclick="initiateWash()">
+                        <i class="fa-solid fa-shower me-2"></i>Initiate Wash
+                    </button>
+                </div>
+
+                <input type="range" class="form-range dust-slider" min="0" max="60" step="1" value="0" id="dustSlider" oninput="runSoilingEngine()">
+                <div class="d-flex justify-content-between text-muted small mt-1">
+                    <span>Clean (0 Days)</span>
+                    <span>Moderate Dust (30 Days)</span>
+                    <span>Heavy Soiling (60 Days)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="row g-3 h-100">
+            <div class="col-6">
+                <div class="metric-box glow-green">
+                    <div class="metric-title">Clean Potential</div>
+                    <div class="metric-value text-success"><span id="valIdeal">500</span> <span style="font-size:1rem;">W</span></div>
+                </div>
+            </div>
+
+            <div class="col-6">
+                <div class="metric-box glow-red">
+                    <div class="metric-title">Soiling Loss Ratio</div>
+                    <div class="metric-value text-danger"><span id="valLossRatio">0.0</span>%</div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="metric-box glow-yellow">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-title text-warning">Actual Current Output</div>
+                            <div class="text-muted small">Power after dust attenuation</div>
+                        </div>
+                        <div class="metric-value text-warning"><span id="valActual">500</span> <span style="font-size:1rem;">W</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="metric-box" style="border-left: 4px solid #ec4899; box-shadow: -10px 0 25px -10px rgba(236, 72, 153, 0.8);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-title" style="color: #f472b6;">Financial Waste Rate</div>
+                            <div class="text-muted small">EGP Lost per Month (100 Panels)</div>
+                        </div>
+                        <div class="metric-value" style="color: #f472b6;">-<span id="valMoney">0</span> <span style="font-size:1rem;">EGP</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm glow-engine">
+            <div class="card-body p-4 text-white">
+                <h4 class="fw-bold mb-4"><i class="fa-solid fa-broom text-primary me-2" style="color: #8b5cf6 !important;"></i>Soiling Physics & Financial Modeling</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Simulation Constants</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+                            <ul class="list-unstyled mb-0 small text-white" style="line-height: 2.2;">
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Ideal Panel Power (P_ideal):</span>
+                                    <span class="text-success fw-bold">500 W</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Daily Soiling Rate:</span>
+                                    <span class="text-warning fw-bold">-0.4% / Day</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Max Saturation Cap:</span>
+                                    <span class="text-danger fw-bold">35% Max Loss</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>Average Peak Sun Hours:</span>
+                                    <span class="text-info fw-bold">5 h / Day</span>
+                                </li>
+                                <li class="d-flex justify-content-between border-bottom border-secondary pb-1 mb-1">
+                                    <span>System Size:</span>
+                                    <span class="text-white fw-bold">100 Panels</span>
+                                </li>
+                                <li class="d-flex justify-content-between pt-1">
+                                    <span>Tariff Rate (Price/kWh):</span>
+                                    <span class="fw-bold" style="color: #f472b6;">2.0 EGP</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: #a78bfa;">Real-time Calculation Logic</h6>
+                        <div class="p-3 rounded-3 border border-secondary bg-dark">
+
+                            <h6 class="text-white small fw-bold mb-1">1. Accumulative Soiling Loss Ratio</h6>
+                            <div class="clean-formula text-warning">
+                                Loss_% = MIN( Days_Without_Cleaning &times; 0.4 , 35 )
+                            </div>
+
+                            <h6 class="text-white small fw-bold mb-1 mt-3">2. Actual Derated Power</h6>
+                            <div class="clean-formula text-success">
+                                P_actual = P_ideal &times; ( 1 - [Loss_% / 100] )
+                            </div>
+
+                            <h6 class="text-white small fw-bold mb-1 mt-3">3. Financial Waste Estimation (Monthly)</h6>
+                            <div class="clean-formula mb-0" style="color: #f472b6; line-height: 1.8;">
+                                Lost_Watts = P_ideal - P_actual<br>
+                                Lost_kWh_Per_Day = (Lost_Watts &times; 5h) / 1000<br>
+                                Financial_Loss = Lost_kWh_Per_Day &times; 30d &times; 100_Panels &times; 2.0_EGP
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Global variable for Wash Animation
+        let washAnimation;
+
+        function initWashAnimation() {
+            const wiper = document.getElementById('waterWiper');
+
+            // Sweep from left to right over the 3D panel
+            const washKeyframes = [
+                { left: '-50%' },
+                { left: '150%' }
+            ];
+
+            washAnimation = wiper.animate(washKeyframes, {
+                duration: 1500, // 1.5 seconds to sweep
+                easing: 'ease-in-out',
+                fill: 'forwards'
+            });
+
+            washAnimation.pause(); // Wait for button click
+        }
+
+        function runSoilingEngine() {
+            // 1. Read Input (Days)
+            const days = parseFloat(document.getElementById('dustSlider').value);
+            document.getElementById('daysDisplay').innerText = days;
+
+            // 2. Physics & Soiling Logic
+            // In dusty cities like Cairo, soiling can reduce efficiency by ~0.4% per dry day
+            const dailySoilingRate = 0.4; // %
+            let lossRatio = days * dailySoilingRate;
+
+            // Cap the max loss (usually dust reaches a saturation point, e.g., 35% max loss)
+            if (lossRatio > 35) lossRatio = 35;
+
+            const idealPower = 500; // 500W Panel
+            let actualPower = idealPower * (1 - (lossRatio / 100));
+
+            // 3. Business / Financial Logic
+            // Calculate lost energy per day for a system of 100 panels
+            // Assuming 5 peak sun hours per day, Tariff = 2.0 EGP / kWh
+            const lostWatts = idealPower - actualPower;
+            const lostKwhPerDay = (lostWatts * 5) / 1000;
+            const lostMoneyPerMonth = lostKwhPerDay * 30 * 100 /* panels */ * 2.0 /* EGP */;
+
+            // 4. Update UI Metrics
+            document.getElementById('valLossRatio').innerText = lossRatio.toFixed(1);
+            document.getElementById('valActual').innerText = actualPower.toFixed(0);
+            document.getElementById('valMoney').innerText = lostMoneyPerMonth.toFixed(0);
+
+            // 5. Update Visuals (Dust Layer Opacity)
+            const dustOverlay = document.getElementById('dustOverlay');
+            const panelBase = document.getElementById('panelBase');
+
+            // Map days (0-60) to opacity (0 to 0.95)
+            let dustOpacity = (lossRatio / 35) * 0.95;
+            dustOverlay.style.opacity = dustOpacity;
+
+            // Dim the glow of the panel if it's dirty
+            if(dustOpacity > 0.5) {
+                panelBase.style.boxShadow = "-20px 30px 40px rgba(0,0,0,0.9)";
+            } else {
+                panelBase.style.boxShadow = "-20px 30px 40px rgba(0,0,0,0.7)";
+            }
+        }
+
+        // The Magic "Wash" Function
+        function initiateWash() {
+            const btn = document.getElementById('btnWash');
+            const slider = document.getElementById('dustSlider');
+
+            // Disable button to prevent spamming
+            btn.disabled = true;
+            slider.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Washing...';
+
+            // Play Web Animation
+            washAnimation.play();
+
+            // As the water sweeps, clean the panel smoothly over 1.5 seconds
+            let currentDays = parseFloat(slider.value);
+            let intervalTime = 1500 / (currentDays || 1); // fallback to 1 to avoid Infinity
+
+            let washInterval = setInterval(() => {
+                if (currentDays > 0) {
+                    currentDays -= 1;
+                    slider.value = currentDays;
+                    runSoilingEngine(); // Recalculate live as it cleans
+                } else {
+                    clearInterval(washInterval);
+                    // Reset Animation and UI
+                    washAnimation.cancel(); // rewind animation
+                    btn.disabled = false;
+                    slider.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-shower me-2"></i>Initiate Wash';
+                }
+            }, intervalTime);
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initWashAnimation();
+            runSoilingEngine();
+        };
+    </script>
+}
