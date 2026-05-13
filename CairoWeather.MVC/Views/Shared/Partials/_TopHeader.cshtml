@@ -1,0 +1,21 @@
+﻿<div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">@ViewData["Title"]</h3>
+        <p class="text-muted mb-0">Advanced Environmental & Solar Monitoring</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <div class="btn-group shadow-sm" role="group">
+            <button type="button" class="btn btn-light border" onclick="exportRealData('csv')" title="Download CSV">
+                <i class="fa-solid fa-file-csv text-success me-1"></i> CSV
+            </button>
+            <button type="button" class="btn btn-light border" onclick="exportRealData('xlsx')" title="Download Excel">
+                <i class="fa-solid fa-file-excel text-success me-1"></i> Excel
+            </button>
+        </div>
+
+        <button class="btn btn-ai-magic shadow-sm" onclick="triggerContextualAIReport()">
+            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Generate AI Insights
+        </button>
+    </div>
+</div>

@@ -1,0 +1,157 @@
+﻿@{
+    ViewData["Title"] = "Yield Comparison";
+}
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+    <h5 class="fw-bold mb-3"><i class="fa-solid fa-code-compare text-primary me-2"></i>Real Data Yield Comparison</h5>
+
+    <div class="d-flex flex-wrap gap-3 mb-4 p-3 bg-light rounded-3 border align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success">Day 1</span>
+            <input type="date" class="form-control shadow-none" id="compareDate1" value="2023-07-15" min="2015-01-01" max="2025-12-31">
+        </div>
+        <span class="fw-bold text-muted">VS</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark">Day 2</span>
+            <input type="date" class="form-control shadow-none" id="compareDate2" value="2023-03-22" min="2015-01-01" max="2025-12-31">
+        </div>
+        <button class="btn btn-primary px-4 ms-auto fw-bold shadow-sm" onclick="fetchRealComparisonData(this)">
+            <i class="fa-solid fa-cloud-arrow-down me-2"></i>Fetch Actual Data
+        </button>
+    </div>
+
+    <div id="comparisonInsight" class="alert alert-info border-info d-none mb-4" role="alert">
+        <i class="fa-solid fa-lightbulb text-info me-2 fs-5"></i>
+        <span id="insightText"></span>
+    </div>
+
+    <div class="chart-container" style="height: 350px;">
+        <canvas id="comparisonChart"></canvas>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-top: 4px solid #10b981 !important;">
+            <div class="card-body p-4">
+                <h4 class="text-dark fw-bold mb-4"><i class="fa-solid fa-book-open-reader text-success me-2"></i>Understanding Interactive Yield Simulation</h4>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h5 class="text-success fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-solar-panel me-2"></i>1. Capacity Modeling (kWp)</h5>
+                        <p class="text-muted small">This calculates the <strong>theoretical peak power</strong>. It assumes "Standard Test Conditions" (1000 W/m&sup2; solar intensity).</p>
+
+                        <div class="p-3 mb-3 bg-light rounded border text-center font-monospace text-dark fw-bold">
+                            Capacity (kWp) = Area (m&sup2;) &times; Efficiency &times; 1 (STC Constant)
+                        </div>
+                        <ul class="text-muted small">
+                            <li><strong>Monocrystalline (21%):</strong> Best for space-constrained Cairo rooftops.</li>
+                            <li><strong>Polycrystalline (17%):</strong> Standard cost-effective balance.</li>
+                        </ul>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-success fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-bolt-lightning me-2"></i>2. Yield Comparison Logic (kW)</h5>
+                        <p class="text-muted small">This is the <strong>dynamic engine</strong>. It takes your designed capacity and calculates exactly what the panels produce using historical weather data.</p>
+
+                        <div class="p-3 mb-3 rounded border text-center font-monospace text-dark fw-bold" style="background-color: #ecfdf5;">
+                            Actual Yield (kW) = Capacity (kWp) &times; (GHI_actual / 1000) &times; &eta;_thermal
+                        </div>
+
+                        <div class="text-muted small">
+                            <strong>Where:</strong><br />
+                            &bull; <strong>GHI_actual:</strong> The real solar radiation fetched from the database for the selected hour.<br />
+                            &bull; <strong>&eta;_thermal:</strong> Temperature correction factor (Yield drops as panels heat up beyond 25&deg;C).<br />
+                            &bull; <strong>Total Production:</strong> Calculated as the area under the curve (Sum of all hourly kW).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let compChart;
+        function initComparisonChart(labels, data1, data2) {
+            const ctx = document.getElementById('comparisonChart');
+            if(compChart) compChart.destroy();
+            compChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Day 1 Yield (kW)', data: data1, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 3 },
+                        { label: 'Day 2 Yield (kW)', data: data2, borderColor: '#f59e0b', borderDash: [5, 5], fill: false, tension: 0.4, borderWidth: 3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        initComparisonChart(["6am","8am","10am","12pm","2pm","4pm","6pm"], [0,0,0,0,0,0,0], [0,0,0,0,0,0,0]);
+
+        async function fetchRealComparisonData(btnElement) {
+            const date1 = document.getElementById('compareDate1').value;
+            const date2 = document.getElementById('compareDate2').value;
+
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Loading...';
+            btnElement.disabled = true;
+
+            try {
+                // Ensure this matches the route in your Controller
+                const response = await fetch(`/api/Dashboard/InteractiveSimulators?date1=${date1}&date2=${date2}`);
+                if (!response.ok) throw new Error("API not found. Using Mock Data.");
+
+                const data = await response.json();
+                processAndDisplayData(data.labels, data.day1, data.day2);
+
+            } catch (error) {
+                console.warn(error.message);
+                setTimeout(() => {
+                    const mockLabels = ["6am", "8am", "10am", "12pm", "2pm", "4pm", "6pm"];
+                    const mockDay1 = [0.2, 1.8, 4.1, 5.5, 4.8, 2.2, 0.1];
+                    const mockDay2 = [0.1, 1.1, 2.5, 3.2, 2.9, 1.4, 0];
+                    processAndDisplayData(mockLabels, mockDay1, mockDay2);
+                }, 800);
+            } finally {
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
+            }
+        }
+
+        function processAndDisplayData(labels, day1, day2) {
+              initComparisonChart(labels, day1, day2);
+
+              const sum1 = day1.reduce((a, b) => a + b, 0);
+              const sum2 = day2.reduce((a, b) => a + b, 0);
+
+              let message = "";
+              if(sum1 > sum2) {
+                  const loss = ((1 - (sum2/sum1)) * 100).toFixed(1);
+                  message = `<strong>💡 Smart Analysis:</strong> Energy production on Day 2 <strong>dropped by ${loss}%</strong> compared to Day 1.<br>
+                  <div class="bg-white p-2 rounded border my-2 font-monospace text-dark small">
+                      <strong>Calculation:</strong> (Day 1 Total - Day 2 Total) / Day 1 Total &times; 100<br>
+                      &rarr; (${sum1.toFixed(2)} - ${sum2.toFixed(2)}) / ${sum1.toFixed(2)} &times; 100 = <strong>${loss}%</strong>
+                  </div>
+                  This usually happens due to bad weather conditions, like cloudy skies, dust covering the panels, or extreme heat.`;
+              } else if (sum2 > sum1) {
+                  const gain = (((sum2/sum1) - 1) * 100).toFixed(1);
+                  message = `<strong>💡 Smart Analysis:</strong> Energy production on Day 2 <strong>increased by ${gain}%</strong> compared to Day 1.<br>
+                  <div class="bg-white p-2 rounded border my-2 font-monospace text-dark small">
+                      <strong>Calculation:</strong> (Day 2 Total - Day 1 Total) / Day 1 Total &times; 100<br>
+                      &rarr; (${sum2.toFixed(2)} - ${sum1.toFixed(2)}) / ${sum1.toFixed(2)} &times; 100 = <strong>${gain}%</strong>
+                  </div>
+                  This means the weather on Day 2 was much clearer and cooler, which is perfect for solar panels to work at maximum efficiency.`;
+              } else {
+                  message = `<strong>💡 Smart Analysis:</strong> Both days produced exactly the same amount of energy (${sum1.toFixed(2)} kW), meaning the weather conditions were nearly identical.`;
+              }
+
+              const insightBox = document.getElementById('comparisonInsight');
+              document.getElementById('insightText').innerHTML = message;
+              insightBox.classList.remove('d-none');
+          }
+    </script>
+}

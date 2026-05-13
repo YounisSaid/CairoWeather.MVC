@@ -1,0 +1,90 @@
+﻿@{
+    var actionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? "Hourly";
+}
+
+<aside class="sidebar shadow-sm">
+    <div class="d-flex align-items-center mb-4 px-2">
+        <i class="fa-solid fa-sun text-warning fs-2 me-2"></i>
+        <h5 class="fw-bold text-dark mb-0 lh-sm">Cairo<br><span style="color: var(--primary);">Digital Twin</span></h5>
+    </div>
+
+    <ul class="nav nav-pills flex-column mb-auto">
+
+        <li class="sidebar-heading">🌤️ Climate Analytics</li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "Hourly" ? "active" : "")" href="@Url.Action("Hourly", "Dashboard")">
+                <i class="fa-solid fa-clock"></i> Historical Hourly
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "Tmy" ? "active" : "")" href="@Url.Action("Tmy", "Dashboard")">
+                <i class="fa-solid fa-calendar-check text-success"></i> TMY Baseline (2025)
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "Monthly" ? "active" : "")" href="@Url.Action("Monthly", "Dashboard")">
+                <i class="fa-solid fa-calendar-week"></i> 30-Day Aggregation
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "Yearly" ? "active" : "")" href="@Url.Action("Yearly", "Dashboard")">
+                <i class="fa-solid fa-calendar-days"></i> Annual Seasonality
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "Decadal" ? "active" : "")" href="@Url.Action("Decadal", "Dashboard")">
+                <i class="fa-solid fa-earth-africa"></i> Decadal Trends
+            </a>
+        </li>
+
+        <li class="sidebar-heading mt-4">⚡ Solar Physics & Simulation</li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "InteractiveSimulators" ? "active" : "")" href="@Url.Action("InteractiveSimulators", "Dashboard")">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Interactive Simulators
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "SolarSimulator" ? "active" : "")" href="@Url.Action("SolarSimulator", "Dashboard")">
+                <i class="fa-solid fa-temperature-half text-danger"></i> Thermodynamics
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "SolarBifacial" ? "active" : "")" href="@Url.Action("SolarBifacial", "Dashboard")">
+                <i class="fa-solid fa-layer-group text-info"></i> Bifacial Yield
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "SolarInverter" ? "active" : "")" href="@Url.Action("SolarInverter", "Dashboard")">
+                <i class="fa-solid fa-plug-circle-bolt" style="color: #8b5cf6;"></i> Inverter Clipping
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "SolarSoiling" ? "active" : "")" href="@Url.Action("SolarSoiling", "Dashboard")">
+                <i class="fa-solid fa-smog text-secondary"></i> Soiling & Shading
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "SolarTracking" ? "active" : "")" href="@Url.Action("SolarTracking", "Dashboard")">
+                <i class="fa-solid fa-satellite-dish text-success"></i> Tracker Sizing
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "SolarPlanner" ? "active" : "")" href="@Url.Action("SolarPlanner", "Dashboard")">
+                <i class="fa-solid fa-house-chimney-window text-info"></i> Household Planner
+            </a>
+        </li>
+
+        <li class="sidebar-heading mt-4">📚 System Documentation</li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "Formulas" ? "active" : "")" href="@Url.Action("Formulas", "Dashboard")">
+                <i class="fa-solid fa-square-root-variable text-primary"></i> Core Math & Formulas
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(actionName == "DataSources" ? "active" : "")" href="@Url.Action("DataSources", "Dashboard")">
+                <i class="fa-solid fa-shield-halved text-info"></i> Data Sources
+            </a>
+        </li>
+        
+    </ul>
+</aside>

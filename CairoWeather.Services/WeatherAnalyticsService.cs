@@ -382,23 +382,19 @@ namespace CairoWeather.Core.Services
         }
         public async Task<ChartDataDto> GetYieldComparisonAsync(DateTime date1, DateTime date2)
         {
-            // 1. هنجيب قراءات من 6 الصبح لـ 6 المغرب لليوم الأول
             var day1Readings = await _context.HourlyReadings
                 .Where(r => r.Time.Date == date1.Date && r.Time.Hour >= 6 && r.Time.Hour <= 18)
                 .OrderBy(r => r.Time)
                 .ToListAsync();
 
-            // 2. هنجيب قراءات اليوم التاني
             var day2Readings = await _context.HourlyReadings
                 .Where(r => r.Time.Date == date2.Date && r.Time.Hour >= 6 && r.Time.Hour <= 18)
                 .OrderBy(r => r.Time)
                 .ToListAsync();
 
-            // 3. تجهيز الـ Labels (من 6 الصبح لـ 6 المغرب)
             var labels = Enumerable.Range(6, 13).Select(h => $"{h}:00").ToList();
 
-            // 4. تحويل الإشعاع الشمسي لإنتاج طاقة (kW)
-            // معامل 0.0075 بيفترض محطة 50 متر بكفاءة 20% ونسبة أداء 75%
+
             var day1Data = labels.Select(l =>
             {
                 var hour = int.Parse(l.Split(':')[0]);
@@ -413,7 +409,6 @@ namespace CairoWeather.Core.Services
                 return reading != null ? Math.Round((reading.ShortwaveRadiation ?? 0) * 0.0075, 2) : 0;
             }).ToList();
 
-            // 5. في حالة الداتا بيز فاضية في الأيام دي (Mock Data للعرض)
             if (!day1Data.Any(d => d > 0)) day1Data = new List<double> { 0, 1.5, 3.8, 5.2, 4.9, 2.5, 0, 0, 0, 0, 0, 0, 0 };
             if (!day2Data.Any(d => d > 0)) day2Data = new List<double> { 0, 0.9, 2.1, 3.1, 2.8, 1.2, 0, 0, 0, 0, 0, 0, 0 };
 

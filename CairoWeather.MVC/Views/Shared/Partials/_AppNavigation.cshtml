@@ -1,0 +1,101 @@
+﻿@{
+    var actionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? "Hourly";
+
+    // 1. Group Definitions
+    string activeGroup = "Climate";
+    string[] solarActions = { "StationConfigurator", "SolarSimulator", "SolarInverter", "SolarSoiling", "SolarShading", "SolarBifacial", "SolarTracking", "SolarPlanner" };
+    string[] docActions = { "Formulas", "DataSources", "OurTeam" };
+
+    // 2. Determine Active Group
+    if (solarActions.Contains(actionName))
+    {
+        activeGroup = "Solar";
+    }
+    else if (docActions.Contains(actionName))
+    {
+        activeGroup = "Docs";
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <i class="fa-solid fa-sun text-warning fs-1"></i>
+        <div>
+            <h2 class="fw-bold text-dark mb-0">Cairo <span style="color: var(--primary);">Radiative Climate</span> Digital Twin</h2>
+            <p class="text-muted mb-0">Advanced Environmental & Solar Monitoring</p>
+        </div>
+    </div>
+
+    @if (activeGroup == "Climate" && actionName != "YieldComparison" && actionName != "UhiHeatmap")
+    {
+        <div class="d-flex gap-2">
+            <div class="btn-group shadow-sm" role="group">
+                <button type="button" class="btn btn-light border" onclick="exportRealData('csv')" title="Download CSV">
+                    <i class="fa-solid fa-file-csv text-success me-1"></i> CSV
+                </button>
+                <button type="button" class="btn btn-light border" onclick="exportRealData('xlsx')" title="Download Excel">
+                    <i class="fa-solid fa-file-excel text-success me-1"></i> Excel
+                </button>
+            </div>
+            <button class="btn btn-ai-magic shadow-sm" onclick="triggerContextualAIReport()">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Generate AI Insights
+            </button>
+        </div>
+    }
+</div>
+
+<ul class="nav nav-tabs mb-3 border-bottom-0" style="border-bottom: 2px solid #e2e8f0 !important;">
+    <li class="nav-item">
+        <a class="nav-link fs-6 fw-bold @(activeGroup == "Climate" ? "active text-primary" : "text-muted")"
+           href="@Url.Action("Hourly", "Dashboard")"
+           style="@(activeGroup == "Climate" ? "border-bottom: 3px solid var(--primary); background: transparent;" : "border: none;")">
+            🌤️ Climate Analytics
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link fs-6 fw-bold @(activeGroup == "Solar" ? "active text-primary" : "text-muted")"
+           href="@Url.Action("StationConfigurator", "Dashboard")"
+           style="@(activeGroup == "Solar" ? "border-bottom: 3px solid var(--primary); background: transparent;" : "border: none;")">
+            ⚡ Solar Applications
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link fs-6 fw-bold @(activeGroup == "Docs" ? "active text-primary" : "text-muted")"
+           href="@Url.Action("Formulas", "Dashboard")"
+           style="@(activeGroup == "Docs" ? "border-bottom: 3px solid var(--primary); background: transparent;" : "border: none;")">
+            📚 System Documentation
+        </a>
+    </li>
+</ul>
+
+<div class="mb-4">
+    <ul class="nav nav-pills d-flex flex-wrap gap-2 align-items-center">
+        @if (activeGroup == "Climate")
+        {
+            <li class="nav-item"><a class="nav-link @(actionName == "Hourly" ? "active" : "")" href="@Url.Action("Hourly", "Dashboard")"><i class="fa-solid fa-clock me-1"></i>Hourly</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "Tmy" ? "active" : "")" href="@Url.Action("Tmy", "Dashboard")"><i class="fa-solid fa-calendar-check me-1"></i>TMY Baseline</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "Monthly" ? "active" : "")" href="@Url.Action("Monthly", "Dashboard")"><i class="fa-solid fa-calendar-week me-1"></i>30-Day Aggregation</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "Yearly" ? "active" : "")" href="@Url.Action("Yearly", "Dashboard")"><i class="fa-solid fa-calendar-days me-1"></i>Annual Seasonality</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "Decadal" ? "active" : "")" href="@Url.Action("Decadal", "Dashboard")"><i class="fa-solid fa-earth-africa me-1"></i>Decadal Trends</a></li>
+
+            <li class="nav-item ms-md-auto"><a class="nav-link @(actionName == "UhiHeatmap" ? "active" : "")" href="@Url.Action("UhiHeatmap", "Dashboard")" style="@(actionName == "UhiHeatmap" ? "background-color: #ef4444; color: white;" : "")"><i class="fa-solid fa-map-location-dot me-1"></i>UHI Map</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "YieldComparison" ? "active" : "")" href="@Url.Action("YieldComparison", "Dashboard")" style="@(actionName == "YieldComparison" ? "background-color: #3b82f6; color: white;" : "")"><i class="fa-solid fa-code-compare me-1"></i>Yield Comparison</a></li>
+        }
+        else if (activeGroup == "Solar")
+        {
+            <li class="nav-item"><a class="nav-link @(actionName == "StationConfigurator" ? "active" : "")" href="@Url.Action("StationConfigurator", "Dashboard")" style="@(actionName == "StationConfigurator" ? "background-color: #10b981; color: white;" : "")"><i class="fa-solid fa-calculator me-1"></i>Configurator</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "SolarSimulator" ? "active" : "")" href="@Url.Action("SolarSimulator", "Dashboard")"><i class="fa-solid fa-temperature-half me-1"></i>Thermodynamics</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "SolarBifacial" ? "active" : "")" href="@Url.Action("SolarBifacial", "Dashboard")"><i class="fa-solid fa-layer-group me-1"></i>Bifacial Yield</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "SolarInverter" ? "active" : "")" href="@Url.Action("SolarInverter", "Dashboard")"><i class="fa-solid fa-plug-circle-bolt me-1"></i>Inverter Clipping</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "SolarSoiling" ? "active" : "")" href="@Url.Action("SolarSoiling", "Dashboard")"><i class="fa-solid fa-smog me-1"></i>Soiling</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "SolarShading" ? "active" : "")" href="@Url.Action("SolarShading", "Dashboard")"><i class="fa-solid fa-cloud-moon me-1"></i>Bypass Diodes</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "SolarTracking" ? "active" : "")" href="@Url.Action("SolarTracking", "Dashboard")"><i class="fa-solid fa-satellite-dish me-1"></i>Tracker Sizing</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "SolarPlanner" ? "active" : "")" href="@Url.Action("SolarPlanner", "Dashboard")"><i class="fa-solid fa-house-chimney-window me-1"></i>Household Planner</a></li>
+        }
+        else if (activeGroup == "Docs")
+        {
+            <li class="nav-item"><a class="nav-link @(actionName == "Formulas" ? "active" : "")" href="@Url.Action("Formulas", "Dashboard")"><i class="fa-solid fa-square-root-variable text-primary me-2"></i>Core Math & Formulas</a></li>
+            <li class="nav-item"><a class="nav-link @(actionName == "DataSources" ? "active" : "")" href="@Url.Action("DataSources", "Dashboard")"><i class="fa-solid fa-shield-halved text-info me-2"></i>Data Sources</a></li>
+        }
+    </ul>
+</div>

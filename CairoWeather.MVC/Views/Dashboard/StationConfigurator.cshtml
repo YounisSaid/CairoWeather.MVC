@@ -1,0 +1,60 @@
+﻿@{
+    ViewData["Title"] = "Station Configurator";
+}
+
+<style>
+    .equation-box {
+        background: #f1f5f9;
+        border-left: 4px solid #3b82f6;
+        padding: 15px;
+        font-family: monospace;
+        font-size: 1.1rem;
+        border-radius: 0 8px 8px 0;
+    }
+</style>
+
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-5">
+        <h4 class="fw-bold text-dark mb-4"><i class="fa-solid fa-calculator text-primary me-2"></i>System Sizing & STC Equations</h4>
+
+        <div class="equation-box mb-4 text-dark">
+            <strong>Standard Test Condition (STC) Formula:</strong><br />
+            P<sub>max</sub> = Area (m²) × Panel Efficiency (%) × Irradiance (1000 W/m²)
+        </div>
+
+        <div class="row g-4 align-items-center">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Panel Technology</label>
+                <select class="form-select form-select-lg" id="panelType" onchange="recalculateSolar()">
+                    <option value="0.21">Monocrystalline (High Eff - 21%)</option>
+                    <option value="0.17">Polycrystalline (Standard - 17%)</option>
+                    <option value="0.11">Thin-Film (Low Yield - 11%)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Available Roof Area (m²)</label>
+                <input type="number" class="form-control form-control-lg" id="roofArea" value="50" onkeyup="recalculateSolar()" onchange="recalculateSolar()">
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 rounded-4 text-center" style="background: #ecfdf5; border: 2px solid #10b981;" id="capacityBox">
+                    <span class="d-block text-success fw-bold text-uppercase mb-2">Estimated Max Capacity</span>
+                    <span class="fs-2 fw-bolder text-dark" id="maxCapacity">10.50 kWp</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function recalculateSolar() {
+            const eff = parseFloat(document.getElementById('panelType').value);
+            const area = parseFloat(document.getElementById('roofArea').value);
+            if(isNaN(area) || area <= 0) {
+                document.getElementById('maxCapacity').innerText = "0.00 kWp";
+                return;
+            }
+            document.getElementById('maxCapacity').innerText = (area * eff).toFixed(2) + " kWp";
+        }
+    </script>
+}

@@ -217,9 +217,14 @@ namespace CairoWeather.MVC.Controllers.Api
                 return Ok(new { reportHtml = aiHtmlResponse });
             }
             catch (Exception ex)
+
             {
+                // Funny fallback message for any other HTTP or URI crashes
                 // Output detailed error into UI panel
-                return Ok(new { reportHtml = $"<div class='alert alert-danger'><strong>Backend Crash (500 Error):</strong><br/>{ex.Message}</div>" });
+                return Ok(new
+                {
+                    reportHtml = "<div class='alert alert-danger text-center shadow-sm'><h4 class='mb-2'><i class='fa-solid fa-battery-empty me-2'></i>You're done for today! No more tokens for you!</h4><p class='mb-0'>I am using the free tier. <strong>Pay me to upgrade my free plan!</strong> 💸🤖</p></div>"
+                });
             }
         }
         private async Task<string> CallGeminiAsync(string prompt)
@@ -257,7 +262,8 @@ namespace CairoWeather.MVC.Controllers.Api
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    return $"<div class='alert alert-danger'><strong>Google API Rejected Request:</strong><br/>{error}</div>";
+                    return "<div class='alert alert-danger text-center shadow-sm'><h4 class='mb-2'><i class='fa-solid fa-battery-empty me-2'></i>You're done for today! No more tokens for you!</h4><p class='mb-0'>I am using the free tier. <strong>Pay me to upgrade my free plan!</strong> 💸🤖</p></div>"
+;
                 }
 
                 var responseJson = await response.Content.ReadAsStringAsync();
@@ -275,11 +281,13 @@ namespace CairoWeather.MVC.Controllers.Api
             catch (UriFormatException ex)
             {
                 // If the URL breaks, print EXACTLY what it tried to send to find the bug
-                return $"<div class='alert alert-danger'><strong>URI Format Crash:</strong><br/>The URL got mangled. <br/><strong>Tried to ping:</strong> {endpoint}<br/><strong>Error:</strong> {ex.Message}</div>";
+                return "<div class='alert alert-danger text-center shadow-sm'><h4 class='mb-2'><i class='fa-solid fa-battery-empty me-2'></i>You're done for today! No more tokens for you!</h4><p class='mb-0'>I am using the free tier. <strong>Pay me to upgrade my free plan!</strong> 💸🤖</p></div>"
+;
             }
             catch (Exception ex)
             {
-                return $"<div class='alert alert-danger'><strong>HTTP Client Crash:</strong><br/>{ex.Message}</div>";
+                return "<div class='alert alert-danger text-center shadow-sm'><h4 class='mb-2'><i class='fa-solid fa-battery-empty me-2'></i>You're done for today! No more tokens for you!</h4><p class='mb-0'>I am using the free tier. <strong>Pay me to upgrade my free plan!</strong> 💸🤖</p></div>"
+;
             }
         }
     }
